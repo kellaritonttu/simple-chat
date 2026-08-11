@@ -45,7 +45,7 @@ pipeline {
                     steps {
                         sh """
                             cd ./frontend
-                            docker build \
+                            docker build --no-cache \
                                 -t ${DOCKERHUB_NAMESPACE}/simple-chat-frontend:${GIT_SHA} \
                                 -t ${DOCKERHUB_NAMESPACE}/simple-chat-frontend:latest \
                                 -f Dockerfile .
