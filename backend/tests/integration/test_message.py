@@ -53,7 +53,7 @@ async def test_create_message(client: AsyncClient, db_session):
 async def test_update_message(client: AsyncClient, saved_message, db_session):
     response = await client.patch(
         f"/messages/{saved_message.id}",
-        params={"text": "Updated text"}
+        params={"update": "Updated text"}
     )
     assert response.status_code == 200
     assert response.json()["text"] == "Updated text"
@@ -63,7 +63,7 @@ async def test_update_message(client: AsyncClient, saved_message, db_session):
 
 
 async def test_update_message_not_found(client: AsyncClient):
-    response = await client.patch("/messages/999", params={"text": "x"})
+    response = await client.patch("/messages/999", params={"update": "x"})
     assert response.status_code == 404
 
 
