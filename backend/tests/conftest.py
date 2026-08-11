@@ -16,7 +16,7 @@ from repository.message import create_message
 @pytest.fixture
 async def engine():
     engine = create_async_engine(
-        settings.POSTGRES_URL,
+        settings.DATABASE_URL,
         echo=False,
         poolclass=NullPool,
     )
