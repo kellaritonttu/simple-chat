@@ -44,10 +44,11 @@ pipeline {
                 stage('frontend') {
                     steps {
                         sh """
+                            cd ./frontend
                             docker build \
                                 -t ${DOCKERHUB_NAMESPACE}/simple-chat-frontend:${GIT_SHA} \
                                 -t ${DOCKERHUB_NAMESPACE}/simple-chat-frontend:latest \
-                                -f frontend/Dockerfile .
+                                -f Dockerfile .
                             docker push ${DOCKERHUB_NAMESPACE}/simple-chat-frontend:${GIT_SHA}
                             docker push ${DOCKERHUB_NAMESPACE}/simple-chat-frontend:latest
                         """
