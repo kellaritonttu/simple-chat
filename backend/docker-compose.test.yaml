@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    env_file:
+      - ../.env.test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  tests:
+    build:
+      context: ../
+      dockerfile: backend/Dockerfile.test
+    env_file:
+      - ../.env.test
+    depends_on:
+      postgres:
+        condition: service_healthy
