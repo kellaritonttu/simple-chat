@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
 
   interface Message {
     id: number;
@@ -10,6 +10,7 @@
 
   let messages = $state<Message[]>([]);
   let input = $state('');
+  let interval: ReturnType<typeof setInterval>;
 
   // State to track editing
   let editingId = $state<number | null>(null);
@@ -72,15 +73,12 @@
     }
   }
 
-  onMount(
+  onMount(() => {
     loadMessages();
     interval = setInterval(loadMessages, 3000);
-  );
 
-  onDestroy(() => {
-    clearInterval(interval);
+    return () => clearInterval(interval);
   });
-
 </script>
 
 
