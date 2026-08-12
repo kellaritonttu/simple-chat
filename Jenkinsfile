@@ -59,19 +59,41 @@ pipeline {
 
         stage('Update Terraform') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'github-credentials',
-                    usernameVariable: 'GITHUB_USER',
-                    passwordVariable: 'GITHUB_TOKEN'
-                )]) {
+                script {
+                    // Define variables
+                    def repoUrl = 'github.com/kellaritonttu/simple-chat.git'
+                    def tfVarsFile = 'terraform/terraform.image.auto.tfvars'
+                    def branchName = env.GIT_BRANCH.replace('origin/', '')
+
+                    // Update the Terraform file
                     sh """
-                        sed -i 's/image_tag = .*/image_tag = "${GIT_SHA}"/' terraform/terraform.image.auto.tfvars
+                        sed -i "s/image_tag = .*/image_tag = \\"${GIT_SHA}\\"/" ${tfVarsFile}
+                    """
+
+                    // Configure Git
+                    sh """
                         git config user.email "jenkins@ci"
                         git config user.name "Jenkins"
-                        git add terraform/terraform.image.auto.tfvars
-                        git diff --staged --quiet || git commit -m "ci: update image tag to ${GIT_SHA}"
-                        git push ${env.GIT_URL.replace('https://', "https://${GITHUB_USER}:${GITHUB_TOKEN}@")} HEAD:${env.BRANCH_NAME}
                     """
+
+                    // Stage and commit changes
+                    sh """
+                        git add ${tfVarsFile}
+                        if ! git diff --staged --quiet; then
+                            git commit -m "ci: update image tag to ${GIT_SHA}"
+                        fi
+                    """
+
+                    // Push changes
+                    withCredentials([usernamePassword(
+                        credentialsId: 'github-credentials',
+                        usernameVariable: 'GITHUB_USER',
+                        passwordVariable: 'GITHUB_TOKEN'
+                    )]) {
+                        sh """
+                            git push https://\${GITHUB_USER}:\${GITHUB_TOKEN}@${repoUrl} HEAD:${branchName}
+                        """
+                    }
                 }
             }
         }
