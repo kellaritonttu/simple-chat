@@ -72,7 +72,15 @@
     }
   }
 
-  onMount(loadMessages);
+  onMount(
+    loadMessages(),
+    interval = setInterval(loadMessages, 3000);
+  );
+
+  onDestroy(() => {
+    clearInterval(interval);
+  });
+
 </script>
 
 
