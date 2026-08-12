@@ -67,7 +67,7 @@ pipeline {
 
                     // Update the Terraform file
                     sh """
-                        sed -i "s/image_tag = .*/image_tag = \\"${GIT_SHA}\\"/" ${tfVarsFile}
+                        sh "sed -i 's/image_tag = .*/image_tag = \"${GIT_SHA}\"/' ${tfVarsFile}"
                     """
 
                     // Configure Git
