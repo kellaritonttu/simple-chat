@@ -56,6 +56,25 @@ pipeline {
                 }
             }
         }
+
+        stage('Update Terraform') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'github-credentials',
+                    usernameVariable: 'GITHUB_USER',
+                    passwordVariable: 'GITHUB_TOKEN'
+                )]) {
+                    sh """
+                        sed -i 's/image_tag = .*/image_tag = "${GIT_SHA}"/' terraform/terraform.tfvars
+                        git config user.email "jenkins@ci"
+                        git config user.name "Jenkins"
+                        git add terraform/terraform.tfvars
+                        git diff --staged --quiet || git commit -m "ci: update image tag to ${GIT_SHA}"
+                        git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/your-username/chat.git HEAD:${env.BRANCH_NAME}
+                    """
+                }
+            }
+        }
     }
 
     post {
