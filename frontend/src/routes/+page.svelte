@@ -73,7 +73,7 @@
   }
 
   onMount(
-    loadMessages(),
+    loadMessages();
     interval = setInterval(loadMessages, 3000);
   );
 
