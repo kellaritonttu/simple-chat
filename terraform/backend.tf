@@ -27,6 +27,10 @@ resource "google_cloud_run_service" "backend" {
           name = "FRONTEND_URL"
           value = var.frontend_url
         }
+        env {
+          name = "FIREBASE_PROJECT_ID"
+          value = var.projectId
+        }
       }
     }
   }
