@@ -26,6 +26,30 @@ resource "google_cloud_run_service" "frontend" {
           name  = "BACKEND_HOST"
           value = replace(google_cloud_run_service.backend.status[0].url, "https://", "")
         }
+        env {
+          name  = "PUBLIC_FIREBASE_API_KEY"
+          value = var.apiKey
+        }
+        env {
+          name  = "PUBLIC_FIREBASE_AUTH_DOMAIN"
+          value = var.authDomain
+        }
+        env {
+          name  = "PUBLIC_FIREBASE_PROJECT_ID"
+          value = var.projectId
+        }
+        env {
+          name  = "PUBLIC_FIREBASE_MESSAGING_SENDER"
+          value = var.messagingSenderId
+        }
+        env {
+          name  = "PUBLIC_FIREBASE_APP_ID"
+          value = var.appId
+        }
+        env {
+          name  = "PUBLIC_FIREBASE_STORAGE_BUCKET"
+          value = var.storageBucket
+        }
       }
     }
   }

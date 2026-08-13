@@ -19,6 +19,7 @@
   let currentUserId = $state<string | null>(null);
   let currentUser = $state<any>(null);
   let token = $state<string | null>(null);
+  let newDisplayName = "";
 
   // State to track editing
   let editingId = $state<number | null>(null);
@@ -126,81 +127,85 @@
 </script>
 
 
-<main class="max-w-xl mx-auto p-4">
-  <h1 class="text-2xl font-bold mb-4">Chat</h1>
+<main>
+  {#if !currentUser}
+    <!-- Login page -->
+    <div class="flex justify-center items-center h-screen">
+      <div class="text-center">
+        <h1 class="text-3xl font-bold mb-8">Chat</h1>
+        <button
+          class="bg-white border rounded px-6 py-3 flex items-center gap-3 shadow hover:shadow-md"
+          onclick={signInWithGoogle}
+        >
+          Sign in with Google
+        </button>
+      </div>
+    </div>
 
-  <div class="flex flex-col gap-2 mb-4">
-    {#each messages as message (message.id)}
-      <div class="bg-gray-100 rounded p-3 flex flex-col gap-2">
-        {#if editingId === message.id}
-          <!-- Edit Mode -->
+  {:else}
+    <!-- Chat + account panel -->
+    <div class="max-w-xl mx-auto p-4">
+
+      <!-- Account bar -->
+      <div class="flex justify-between items-center mb-4">
+        <h1 class="text-2xl font-bold">Chat</h1>
+        <div class="flex items-center gap-3">
+          <span class="text-sm text-gray-600">{currentUser.displayName}</span>
+          <button onclick={() => showAccount = !showAccount} class="text-sm text-blue-500">
+            Account
+          </button>
+          <button onclick={logout} class="text-sm text-red-500">
+            Sign out
+          </button>
+        </div>
+      </div>
+
+      <!-- Account panel -->
+      {#if showAccount}
+        <div class="bg-white border rounded p-4 mb-4">
+          <h2 class="font-semibold mb-3">Account settings</h2>
           <div class="flex gap-2">
             <input
-              class="flex-1 border rounded p-2 text-sm bg-white"
-              bind:value={editText}
-              onkeydown={(e) => e.key === 'Enter' && saveEdit(message.id)}
+              class="flex-1 border rounded p-2 text-sm"
+              bind:value={newDisplayName}
+              placeholder="New display name"
             />
             <button
-              class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
-              onclick={() => saveEdit(message.id)}
+              class="bg-blue-500 text-white px-3 py-1 rounded text-sm"
+              onclick={updateDisplayName}
             >
-              Save
-            </button>
-            <button
-              class="bg-gray-300 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-400"
-              onclick={cancelEdit}
-            >
-              Cancel
+              Update
             </button>
           </div>
-        {:else}
-          <!-- Normal Mode -->
-          <div class="flex justify-between items-start">
-            <div>
-              <p class="text-xs font-semibold text-gray-600 mb-1">{message.display_name}</p>
-              <p>{message.text}</p>
-              <span class="text-xs text-gray-400">
-                {new Date(message.edited_at || message.created_at).toLocaleTimeString()}
-              </span>
-              {#if message.edited_at}
-                <span class="text-xs text-blue-500">(edited)</span>
-              {/if}
-            </div>
+          <button
+            class="text-red-500 text-sm mt-3"
+            onclick={deleteAccount}
+          >
+            Delete account
+          </button>
+        </div>
+      {/if}
 
-            {#if !currentUserId || message.user_id === currentUserId}
-              <div class="flex gap-2">
-                <button
-                  class="text-xs text-blue-600 hover:underline"
-                  onclick={() => startEdit(message)}
-                >
-                  Edit
-                </button>
-                <button
-                  class="text-xs text-red-600 hover:underline"
-                  onclick={() => deleteMessage(message.id)}
-                >
-                  Delete
-                </button>
-            </div>
-          {/if}
-          </div>
-        {/if}
+      <div class="flex flex-col gap-2 mb-4">
+        {#each messages as message (message.id)}
+          <!-- Message content -->
+        {/each}
       </div>
-    {/each}
-  </div>
 
-  <div class="flex gap-2">
-    <input
-      class="flex-1 border rounded p-2"
-      bind:value={input}
-      placeholder="Type a message..."
-      onkeydown={(e) => e.key === 'Enter' && sendMessage()}
-    />
-    <button
-      class="bg-blue-500 text-white px-4 py-2 rounded"
-      onclick={sendMessage}
-    >
-      Send
-    </button>
-  </div>
+      <div class="flex gap-2">
+        <input
+          class="flex-1 border rounded p-2"
+          bind:value={input}
+          placeholder="Type a message..."
+          onkeydown={(e) => e.key === 'Enter' && sendMessage()}
+        />
+        <button
+          class="bg-blue-500 text-white px-4 py-2 rounded"
+          onclick={sendMessage}
+        >
+          Send
+        </button>
+      </div>
+    </div>
+  {/if}
 </main>

@@ -65,3 +65,34 @@ variable "image_tag" {
   type        = string
   default     = "latest"
 }
+
+
+# —— Firebase —————————————————————————————————————————————————————————————————
+
+variable "apiKey" {
+  type = string
+  sensitive = true
+}
+
+variable "authDomain" {
+  type      = string
+  sensitive = true
+}
+
+variable "projectId" {
+  type      = string
+  sensitive = true
+}
+
+variable "messagingSenderId" {
+  type = string
+}
+
+variable "appId" {
+  type      = string
+  sensitive = true
+}
+
+variable "storageBucket" {
+  type = string
+}
