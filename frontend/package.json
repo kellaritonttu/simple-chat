@@ -36,6 +36,7 @@
 		"vite": "^8.0.16"
 	},
 	"dependencies": {
+		"@sveltejs/adapter-node": "^5.5.7",
 		"firebase": "^12.17.1"
 	}
 }

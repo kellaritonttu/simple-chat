@@ -16,15 +16,11 @@ resource "google_cloud_run_service" "frontend" {
       containers {
         image = "${var.dockerhub_username}/${var.frontend_image}:latest"
         ports {
-          container_port = 80
+          container_port = 3000
         }
         env {
           name  = "BACKEND_URL"
           value = google_cloud_run_service.backend.status[0].url
-        }
-        env {
-          name  = "BACKEND_HOST"
-          value = replace(google_cloud_run_service.backend.status[0].url, "https://", "")
         }
         env {
           name  = "PUBLIC_FIREBASE_CONFIG"
