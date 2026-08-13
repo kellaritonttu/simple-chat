@@ -41,29 +41,29 @@ pipeline {
                         """
                     }
                 }
-stage('frontend') {
-    steps {
-        withCredentials([
-            string(credentialsId: 'firebase-api-key', variable: 'FIREBASE_API_KEY'),
-        ]) {
-            sh """
-                cd ./frontend
-                docker build --no-cache \
-                    --build-arg PUBLIC_FIREBASE_API_KEY=\${FIREBASE_API_KEY} \
-                    --build-arg PUBLIC_FIREBASE_AUTH_DOMAIN=project-f4f58711-4ba9-4a31-855.firebaseapp.com \
-                    --build-arg PUBLIC_FIREBASE_PROJECT_ID=project-f4f58711-4ba9-4a31-855 \
-                    --build-arg PUBLIC_FIREBASE_STORAGE_BUCKET=project-f4f58711-4ba9-4a31-855.firebasestorage.app \
-                    --build-arg PUBLIC_FIREBASE_MESSAGING_SENDER=8568032847 \
-                    --build-arg PUBLIC_FIREBASE_APP_ID=1:8568032847:web:af407a903bbd8312dda43a \
-                    -t ${DOCKERHUB_NAMESPACE}/simple-chat-frontend:${GIT_SHA} \
-                    -t ${DOCKERHUB_NAMESPACE}/simple-chat-frontend:latest \
-                    -f Dockerfile .
-                docker push ${DOCKERHUB_NAMESPACE}/simple-chat-frontend:${GIT_SHA}
-                docker push ${DOCKERHUB_NAMESPACE}/simple-chat-frontend:latest
-            """
-        }
-    }
-}
+                stage('frontend') {
+                    steps {
+                        withCredentials([
+                            string(credentialsId: 'firebase-api-key', variable: 'FIREBASE_API_KEY'),
+                        ]) {
+                            sh """
+                                cd ./frontend
+                                docker build --no-cache \
+                                    --build-arg PUBLIC_FIREBASE_API_KEY=\${FIREBASE_API_KEY} \
+                                    --build-arg PUBLIC_FIREBASE_AUTH_DOMAIN=project-f4f58711-4ba9-4a31-855.firebaseapp.com \
+                                    --build-arg PUBLIC_FIREBASE_PROJECT_ID=project-f4f58711-4ba9-4a31-855 \
+                                    --build-arg PUBLIC_FIREBASE_STORAGE_BUCKET=project-f4f58711-4ba9-4a31-855.firebasestorage.app \
+                                    --build-arg PUBLIC_FIREBASE_MESSAGING_SENDER=8568032847 \
+                                    --build-arg PUBLIC_FIREBASE_APP_ID=1:8568032847:web:af407a903bbd8312dda43a \
+                                    -t ${DOCKERHUB_NAMESPACE}/simple-chat-frontend:${GIT_SHA} \
+                                    -t ${DOCKERHUB_NAMESPACE}/simple-chat-frontend:latest \
+                                    -f Dockerfile .
+                                docker push ${DOCKERHUB_NAMESPACE}/simple-chat-frontend:${GIT_SHA}
+                                docker push ${DOCKERHUB_NAMESPACE}/simple-chat-frontend:latest
+                            """
+                        }
+                    }
+                }
             }
         }
 
