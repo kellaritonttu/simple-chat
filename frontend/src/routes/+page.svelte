@@ -19,7 +19,8 @@
   let currentUserId = $state<string | null>(null);
   let currentUser = $state<any>(null);
   let token = $state<string | null>(null);
-  let newDisplayName = "";
+  let newDisplayName = $state('');
+  let showAccount = $state(false);
 
   // State to track editing
   let editingId = $state<number | null>(null);
@@ -45,17 +46,15 @@
   }
 
   async function sendMessage() {
-    if (!input.trim()) return;
-   
-    const res = await fetch('/api/messages/', {
-      method: 'POST',
-      headers: await getHeaders(),
-      body: JSON.stringify({ text: input }),
-    });
-   
-    const message = await res.json();
-    messages = [...messages, message];
-    input = '';
+      if (!input.trim()) return;
+    
+      const res = await fetch('/api/messages/', {
+        method: 'POST',
+        headers: await getHeaders(),
+        body: JSON.stringify({ text: input }),
+      });
+    
+      input = '';
   }
 
   function startEdit(message: Message) {
@@ -93,6 +92,33 @@
     if (res.ok) {
       messages = messages.filter((m) => m.id !== id);
     }
+  }
+
+  async function updateDisplayName() {
+    if (!newDisplayName.trim()) return;
+    
+    const res = await fetch('/api/users/me', {
+      method: 'PATCH',
+      headers: await getHeaders(),
+      body: JSON.stringify({ display_name: newDisplayName }),
+    });
+    
+    if (res.ok) {
+      currentUser = { ...currentUser, displayName: newDisplayName };
+      newDisplayName = '';
+      showAccount = false;
+    }
+  }
+
+  async function deleteAccount() {
+    if (!confirm('Delete your account and all messages?')) return;
+    
+    await fetch('/api/users/me', {
+      method: 'DELETE',
+      headers: await getHeaders(),
+    });
+    
+    await logout();
   }
 
   onMount(() => {

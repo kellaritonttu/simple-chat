@@ -1,21 +1,17 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import {
-  PUBLIC_FIREBASE_API_KEY,
-  PUBLIC_FIREBASE_AUTH_DOMAIN,
-  PUBLIC_FIREBASE_PROJECT_ID,
-  PUBLIC_FIREBASE_MESSAGING_SENDER,
-  PUBLIC_FIREBASE_APP_ID,
-  PUBLIC_FIREBASE_STORAGE_BUCKET,
-} from '$env/static/public';
+import { env } from '$env/dynamic/public';
+
+// Parse the JSON config from the env var
+const config = JSON.parse(env.PUBLIC_FIREBASE_CONFIG || '{}');
 
 const firebaseConfig = {
-  apiKey:            PUBLIC_FIREBASE_API_KEY,
-  authDomain:        PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId:         PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket:     PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: PUBLIC_FIREBASE_MESSAGING_SENDER,
-  appId:             PUBLIC_FIREBASE_APP_ID,
+  apiKey: config.apiKey,
+  authDomain: config.authDomain,
+  projectId: config.projectId,
+  storageBucket: config.storageBucket,
+  messagingSenderId: config.messagingSenderId,
+  appId: config.appId,
 };
 
 const app             = initializeApp(firebaseConfig);

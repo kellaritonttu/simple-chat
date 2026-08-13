@@ -6,6 +6,9 @@ server {
 
     resolver 8.8.8.8 valid=30s;
 
+    # COOP header for the document — required for Firebase popup auth
+    add_header Cross-Origin-Opener-Policy "same-origin-allow-popups" always;
+
     location / {
         try_files $uri $uri/ /index.html;
     }
