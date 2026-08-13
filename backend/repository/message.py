@@ -14,8 +14,8 @@ async def get_message_by_id(db: AsyncSession, message_id: int) -> Message | None
     return result.scalar_one_or_none()
 
 
-async def create_message(db: AsyncSession, data: MessageCreate) -> Message:
-    message = Message(text=data.text)
+async def create_message(db: AsyncSession, data: MessageCreate, user_id: str) -> Message:
+    message = Message(text=data.text, user_id=user_id)
     db.add(message)
     await db.commit()
     await db.refresh(message)

@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.pool import NullPool
@@ -10,6 +11,8 @@ from database import get_async_session, Base
 from schemas.message import MessageCreate
 from repository.message import create_message
 
+from repository.user import create_user
+from schemas.user import UserCreate
 
 # ── Database ──────────────────────────────────────────────────────────────────
 
@@ -58,3 +61,59 @@ async def client(db_session):
 @pytest.fixture
 async def saved_message(db_session):
     return await create_message(db_session, MessageCreate(text="Hello world"))
+
+
+# ── Firebase mocking ──────────────────────────────────────────────────────────
+
+@pytest.fixture(autouse=False)
+def mock_firebase():
+    with patch("core.firebase.auth.verify_id_token") as mock:
+        mock.return_value = {
+            "uid": "test-uid-123",
+            "email": "test@example.com"
+        }
+        yield mock
+
+@pytest.fixture(autouse=False)  
+def mock_firebase_other_user():
+    with patch("core.firebase.auth.verify_id_token") as mock:
+        mock.return_value = {
+            "uid": "other-uid-456",
+            "email": "other@example.com"
+        }
+        yield mock
+
+
+# ── User mocking ──────────────────────────────────────────────────────────────
+
+@pytest.fixture
+def mock_firebase():
+    with patch("core.firebase.auth.verify_id_token") as mock:
+        mock.return_value = {
+            "uid": "test-uid-123",
+            "email": "test@example.com"
+        }
+        yield mock
+
+
+@pytest.fixture
+def mock_firebase_other():
+    with patch("core.firebase.auth.verify_id_token") as mock:
+        mock.return_value = {
+            "uid": "other-uid-456",
+            "email": "other@example.com"
+        }
+        yield mock
+
+
+@pytest.fixture
+async def saved_user(db_session):
+    return await create_user(db_session, UserCreate(
+        id="test-uid-123",
+        display_name="Test User"
+    ))
+
+
+@pytest.fixture
+async def saved_message(db_session, saved_user):
+    return await create_message(db_session, MessageCreate(text="Hello world"), user_id=saved_user.id)

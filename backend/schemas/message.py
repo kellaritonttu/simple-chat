@@ -12,9 +12,11 @@ class MessageUpdate(BaseModel):
 
 
 class MessageRead(BaseModel):
-    id:         int
-    text:       str
-    created_at: datetime
-    edited_at:  Optional[datetime] = None
+    id:           int
+    text:         str
+    user_id:      str
+    display_name: str | None = None  # joined from users table
+    created_at:   datetime
+    edited_at:    Optional[datetime] = None
 
     model_config = {"from_attributes": True}

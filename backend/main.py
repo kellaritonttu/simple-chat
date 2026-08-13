@@ -6,8 +6,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import create_db_and_tables
-from routers.message import router
+from routers.message import router as message_router
+from routers.user import router as user_router
 from core.config import settings
+
 
 # ── Logger ────────────────────────────────────────────────────────────────────
 
@@ -44,4 +46,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(router)
+app.include_router(message_router)
+app.include_router(user_router)
