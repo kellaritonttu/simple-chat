@@ -9,7 +9,7 @@ from database import create_db_and_tables
 from routers.message import router as message_router
 from routers.user import router as user_router
 from core.config import settings
-
+from core.firebase import init_firebase
 
 # ── Logger ────────────────────────────────────────────────────────────────────
 
@@ -27,6 +27,8 @@ async def lifespan(app: FastAPI):
     logger.info("Starting Chat Backend...")
     logger.info("Initializing PostgreSQL...")
     await create_db_and_tables()
+
+    init_firebase()
     yield
     logger.info("Shutting down Chat Backend...")
 

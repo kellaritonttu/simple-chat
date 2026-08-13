@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from database import AsyncSessionDep
-from schemas.user import UserCreate, UserRead, UserUpdate
+from schemas.user import *
 from repository.user import *
 from core.firebase import get_current_user
 
