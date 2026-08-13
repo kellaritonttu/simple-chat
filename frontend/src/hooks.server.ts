@@ -4,21 +4,20 @@ import { env } from '$env/dynamic/private';
 export const handle: Handle = async ({ event, resolve }) => {
   const backendUrl = env.BACKEND_URL;
 
-  // 1. Proxy /api/* to backend
+  // 1. Proxy /api/* to backend — STRIP /api/ prefix like nginx did
   if (event.url.pathname.startsWith('/api/')) {
     if (!backendUrl) {
       return new Response('BACKEND_URL not configured', { status: 500 });
     }
 
-    const target = backendUrl.replace(/\/$/, '') 
-      + event.url.pathname 
-      + event.url.search;
+    const backendPath = event.url.pathname.replace(/^\/api/, '');
+    const target = backendUrl.replace(/\/$/, '') + backendPath + event.url.search;
 
     const response = await fetch(target, {
       method: event.request.method,
       headers: event.request.headers,
       body: event.request.body,
-      // @ts-ignore — duplex needed for streaming bodies
+      // @ts-ignore
       duplex: 'half'
     });
 
