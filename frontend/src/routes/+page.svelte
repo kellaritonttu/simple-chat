@@ -17,7 +17,7 @@
   let interval: ReturnType<typeof setInterval>;
 
   let currentUserId = $state<string | null>(null);
-  let currentUser = $state<any>(null);
+  let currentUser = $state.raw<any>(null);
   let token = $state<string | null>(null);
   let displayName = $state('');
   let newDisplayName = $state('');
