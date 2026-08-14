@@ -79,7 +79,7 @@ async def test_create_message_unauthorized(client):
 async def test_update_message(client, mock_firebase, saved_message, db_session):
     response = await client.patch(
         f"/messages/{saved_message.id}",
-        params={"text": "Updated"},
+        json={"text": "Updated"},
         headers={"Authorization": "Bearer fake-token"}
     )
     assert response.status_code == 200
@@ -89,7 +89,7 @@ async def test_update_message(client, mock_firebase, saved_message, db_session):
 async def test_update_message_forbidden(client, mock_firebase_other, saved_message):
     response = await client.patch(
         f"/messages/{saved_message.id}",
-        params={"text": "Updated"},
+        json={"text": "Updated"},
         headers={"Authorization": "Bearer fake-token"}
     )
     assert response.status_code == 403
@@ -98,7 +98,7 @@ async def test_update_message_forbidden(client, mock_firebase_other, saved_messa
 async def test_update_message_not_found(client, mock_firebase):
     response = await client.patch(
         "/messages/999",
-        params={"text": "x"},
+        json={"text": "x"},
         headers={"Authorization": "Bearer fake-token"}
     )
     assert response.status_code == 404

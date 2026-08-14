@@ -33,7 +33,7 @@ async def send_message(
 @router.patch("/{message_id}", response_model=MessageRead)
 async def edit_message(
     message_id: int,
-    text: str,
+    data: MessageUpdate,
     db: AsyncSessionDep,
     current_user: dict = Depends(get_current_user),
 ):
@@ -42,7 +42,7 @@ async def edit_message(
         raise HTTPException(status_code=404, detail="Message not found")
     if message.user_id != current_user["uid"]:
         raise HTTPException(status_code=403, detail="Forbidden")
-    return await update_message(db, message, text)
+    return await update_message(db, message, data.text)
 
 
 @router.delete("/{message_id}", status_code=204)
