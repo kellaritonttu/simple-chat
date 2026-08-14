@@ -1,4 +1,4 @@
-image_tag = "408efa32"
+image_tag = "e27c708f"
 dockerhub_username = "harhatilatonttu" 
 frontend_image     = "simple-chat-frontend" 
 backend_image      = "simple-chat-backend"
