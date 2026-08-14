@@ -107,11 +107,15 @@ def mock_firebase_other():
 
 
 @pytest.fixture
-async def saved_user(db_session):
-    return await create_user(db_session, UserCreate(
-        id="test-uid-123",
-        display_name="Test User"
-    ))
+async def saved_user(db_session, mock_firebase):
+    """Fixture to create and return a test user."""
+    user_data = {
+        "id": "test-uid-123",
+        "google_display_name": "Test User",
+        "app_display_name": "Test User"
+    }
+    user = await create_user(db_session, user_data)
+    return user
 
 
 @pytest.fixture

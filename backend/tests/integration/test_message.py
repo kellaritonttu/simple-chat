@@ -1,17 +1,25 @@
-AUTH_HEADER = {"Authorization": "Bearer fake-token"}
-
+import pytest
 from repository.message import get_message_by_id
+
 
 # ── GET /messages ─────────────────────────────────────────────────────────────
 
 async def test_list_messages_empty(client, mock_firebase):
-    response = await client.get("/messages/", headers=AUTH_HEADER)
+    """Test fetching messages when none exist."""
+    response = await client.get(
+        "/messages/",
+        headers={"Authorization": "Bearer fake-token"}
+    )
     assert response.status_code == 200
     assert response.json() == []
 
 
 async def test_list_messages(client, mock_firebase, saved_message):
-    response = await client.get("/messages/", headers=AUTH_HEADER)
+    """Test fetching a list of messages."""
+    response = await client.get(
+        "/messages/",
+        headers={"Authorization": "Bearer fake-token"}
+    )
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 1
@@ -21,23 +29,32 @@ async def test_list_messages(client, mock_firebase, saved_message):
 # ── GET /messages/{id} ────────────────────────────────────────────────────────
 
 async def test_get_message(client, mock_firebase, saved_message):
-    response = await client.get(f"/messages/{saved_message.id}", headers=AUTH_HEADER)
+    """Test fetching a single message by ID."""
+    response = await client.get(
+        f"/messages/{saved_message.id}",
+        headers={"Authorization": "Bearer fake-token"}
+    )
     assert response.status_code == 200
     assert response.json()["text"] == "Hello world"
 
 
 async def test_get_message_not_found(client, mock_firebase):
-    response = await client.get("/messages/999", headers=AUTH_HEADER)
+    """Test fetching a non-existent message returns 404."""
+    response = await client.get(
+        "/messages/999",
+        headers={"Authorization": "Bearer fake-token"}
+    )
     assert response.status_code == 404
 
 
 # ── POST /messages ────────────────────────────────────────────────────────────
 
 async def test_create_message(client, mock_firebase, saved_user, db_session):
+    """Test creating a new message."""
     response = await client.post(
         "/messages/",
         json={"text": "Test message"},
-        headers=AUTH_HEADER
+        headers={"Authorization": "Bearer fake-token"}
     )
     assert response.status_code == 201
     body = response.json()
@@ -49,43 +66,55 @@ async def test_create_message(client, mock_firebase, saved_user, db_session):
 
 
 async def test_create_message_unauthorized(client):
+    """Test creating a message without authentication fails."""
     response = await client.post(
         "/messages/",
         json={"text": "Test message"},
     )
-    assert response.status_code == 422  # missing Authorization header
+    assert response.status_code == 422
 
 
 # ── PATCH /messages/{id} ──────────────────────────────────────────────────────
 
 async def test_update_message(client, mock_firebase, saved_message, db_session):
+    """Test updating a message."""
     response = await client.patch(
         f"/messages/{saved_message.id}",
-        params={"text": "Updated"},
-        headers=AUTH_HEADER
+        json={"text": "Updated"},
+        headers={"Authorization": "Bearer fake-token"}
     )
     assert response.status_code == 200
     assert response.json()["text"] == "Updated"
 
 
 async def test_update_message_forbidden(client, mock_firebase_other, saved_message):
+    """Test updating another user's message returns 403."""
     response = await client.patch(
         f"/messages/{saved_message.id}",
-        params={"text": "Updated"},
-        headers=AUTH_HEADER
+        json={"text": "Updated"},
+        headers={"Authorization": "Bearer fake-token"}
     )
     assert response.status_code == 403
 
 
 async def test_update_message_not_found(client, mock_firebase):
-    response = await client.patch("/messages/999", params={"text": "x"}, headers=AUTH_HEADER)
+    """Test updating a non-existent message returns 404."""
+    response = await client.patch(
+        "/messages/999",
+        json={"text": "x"},
+        headers={"Authorization": "Bearer fake-token"}
+    )
     assert response.status_code == 404
 
 
 # ── DELETE /messages/{id} ─────────────────────────────────────────────────────
 
 async def test_delete_message(client, mock_firebase, saved_message, db_session):
-    response = await client.delete(f"/messages/{saved_message.id}", headers=AUTH_HEADER)
+    """Test deleting a message."""
+    response = await client.delete(
+        f"/messages/{saved_message.id}",
+        headers={"Authorization": "Bearer fake-token"}
+    )
     assert response.status_code == 204
 
     saved = await get_message_by_id(db_session, saved_message.id)
@@ -93,13 +122,18 @@ async def test_delete_message(client, mock_firebase, saved_message, db_session):
 
 
 async def test_delete_message_forbidden(client, mock_firebase_other, saved_message):
+    """Test deleting another user's message returns 403."""
     response = await client.delete(
         f"/messages/{saved_message.id}",
-        headers=AUTH_HEADER
+        headers={"Authorization": "Bearer fake-token"}
     )
     assert response.status_code == 403
 
 
 async def test_delete_message_not_found(client, mock_firebase):
-    response = await client.delete("/messages/999", headers=AUTH_HEADER)
+    """Test deleting a non-existent message returns 404."""
+    response = await client.delete(
+        "/messages/999",
+        headers={"Authorization": "Bearer fake-token"}
+    )
     assert response.status_code == 404
