@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount } from 'svelte';
   import { auth, signInWithGoogle, logout } from '$lib/firebase';
   import { onAuthStateChanged, type User } from 'firebase/auth';
 
@@ -12,32 +12,45 @@
     edited_at: string | null;
   }
 
-  // ── Reactive UI state (plain/serializable only) ───────────────────────────
-  let messages    = $state<Message[]>([]);
-  let input       = $state('');
-  let token       = $state<string | null>(null);
-  let displayName = $state('');
+  interface AppUser {
+    id: string;
+    google_display_name: string;
+    app_display_name: string;
+  }
+
+  // ── Reactive UI state ───────────────────────────────────────────────────
+  let messages       = $state<Message[]>([]);
+  let input          = $state('');
+  let token          = $state<string | null>(null);
+  let displayName    = $state('');
   let newDisplayName = $state('');
-  let showAccount = $state(false);
-  let editingId   = $state<number | null>(null);
-  let editText    = $state('');
+  let showAccount    = $state(false);
+  let editingId      = $state<number | null>(null);
+  let editText       = $state('');
+  let currentUser    = $state<{ uid: string } | null>(null);
+  let currentAppUser = $state<AppUser | null>(null); // Track app user data
 
-  let currentUser = $state<{ uid: string } | null>(null);
-
-  // ── Firebase User — lives outside Svelte's reactive system ───────────────
+  // ── Firebase User ───────────────────────────────────────────────────────
   let firebaseUser: User | null = null;
-
-  let interval: ReturnType<typeof setInterval>;
+  let interval:     ReturnType<typeof setInterval>;
   const API = '/api';
+
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
   async function getHeaders(): Promise<HeadersInit> {
-    if (firebaseUser) {
-      token = await firebaseUser.getIdToken(); // always fresh
+    if (!firebaseUser) {
+      console.error('getHeaders: firebaseUser is null');
+      return { 'Content-Type': 'application/json' };
+    }
+    try {
+      token = await firebaseUser.getIdToken(false);
+    } catch (err) {
+      console.error('getIdToken failed:', err);
+      token = null;
     }
     return {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
     };
   }
 
@@ -56,6 +69,20 @@
     }
   }
 
+  async function fetchAppUser() {
+    try {
+      const res = await fetch(`${API}/users/me`, {
+        headers: await getHeaders()
+      });
+      if (res.ok) {
+        currentAppUser = await res.json();
+        displayName = currentAppUser?.app_display_name || '';
+      }
+    } catch (err) {
+      console.error('fetchAppUser error:', err);
+    }
+  }
+
   async function sendMessage() {
     if (!input.trim()) return;
     const res = await fetch(`${API}/messages/`, {
@@ -65,7 +92,7 @@
     });
     if (res.ok) {
       input = '';
-      await loadMessages(); // show the message immediately, don't wait for poll
+      await loadMessages();
     }
   }
 
@@ -108,12 +135,15 @@
     const res = await fetch(`${API}/users/me`, {
       method: 'PATCH',
       headers: await getHeaders(),
-      body: JSON.stringify({ display_name: newDisplayName })
+      body: JSON.stringify({ app_display_name: newDisplayName })
     });
     if (res.ok) {
-      displayName    = newDisplayName;
+      displayName = newDisplayName;
       newDisplayName = '';
-      showAccount    = false;
+      showAccount = false;
+      if (currentAppUser) {
+        currentAppUser.app_display_name = newDisplayName;
+      }
     }
   }
 
@@ -128,25 +158,27 @@
 
   onMount(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
-      // Keep Firebase User in plain variable; only poke Svelte with plain data
       firebaseUser = user;
       currentUser  = user ? { uid: user.uid } : null;
 
       if (user) {
-        token       = await user.getIdToken();
-        displayName = user.displayName || user.email || '';
-
+        token = await user.getIdToken();
         await fetch(`${API}/users/`, {
           method: 'POST',
           headers: await getHeaders(),
-          body: JSON.stringify({ id: user.uid, display_name: displayName })
+          body: JSON.stringify({
+            id: user.uid,
+            google_display_name: user.displayName || '',
+            app_display_name: user.displayName || ''
+          })
         });
-
+        await fetchAppUser();
         await loadMessages();
         interval = setInterval(loadMessages, 3000);
       } else {
         clearInterval(interval);
         messages = [];
+        currentAppUser = null;
       }
     });
 
@@ -176,7 +208,6 @@
   {:else}
     <!-- Chat + account panel -->
     <div class="max-w-xl mx-auto p-4">
-
       <!-- Account bar -->
       <div class="flex justify-between items-center mb-4">
         <h1 class="text-2xl font-bold">Chat</h1>
@@ -217,6 +248,7 @@
         </div>
       {/if}
 
+      <!-- Messages and input remain unchanged -->
       <div class="flex flex-col gap-2 mb-4">
         {#each messages as message (message.id)}
           <div class="border rounded p-2">
