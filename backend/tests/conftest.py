@@ -56,13 +56,6 @@ async def client(db_session):
     app.dependency_overrides.clear()
 
 
-# ── Message fixtures ──────────────────────────────────────────────────────────
-
-@pytest.fixture
-async def saved_message(db_session):
-    return await create_message(db_session, MessageCreate(text="Hello world"))
-
-
 # ── Firebase mocking ──────────────────────────────────────────────────────────
 
 @pytest.fixture
@@ -85,10 +78,10 @@ def mock_firebase_other():
         yield mock
 
 
-# ── User mocking ──────────────────────────────────────────────────────────────
+# ── User fixtures ─────────────────────────────────────────────────────────────
 
 @pytest.fixture
-async def saved_user(db_session, mock_firebase):
+async def saved_user(db_session):
     """Fixture to create and return a test user."""
     user_data = UserCreate(
         id="test-uid-123",
@@ -99,6 +92,12 @@ async def saved_user(db_session, mock_firebase):
     return user
 
 
+# ── Message fixtures ──────────────────────────────────────────────────────────
+
 @pytest.fixture
 async def saved_message(db_session, saved_user):
-    return await create_message(db_session, MessageCreate(text="Hello world"), user_id=saved_user.id)
+    return await create_message(
+        db_session,
+        MessageCreate(text="Hello world"),
+        user_id=saved_user.id
+    )

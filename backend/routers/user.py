@@ -44,7 +44,7 @@ async def update_me(
     user = await get_user_by_id(db, current_user["uid"])
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return await update_display_name(db, user, data.display_name)
+    return await update_display_name(db, user, data.app_display_name)
 
 
 @router.delete("/me", status_code=204)
