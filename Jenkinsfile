@@ -35,7 +35,7 @@ pipeline {
                             docker build \
                                 -t ${DOCKERHUB_NAMESPACE}/simple-chat-backend:${GIT_SHA} \
                                 -t ${DOCKERHUB_NAMESPACE}/simple-chat-backend:latest \
-                                -f backend/Dockerfile .
+                                -f backend/Dockerfile . --no-cache
                             docker push ${DOCKERHUB_NAMESPACE}/simple-chat-backend:${GIT_SHA}
                             docker push ${DOCKERHUB_NAMESPACE}/simple-chat-backend:latest
                         """
@@ -48,7 +48,7 @@ pipeline {
                             docker build \
                                 -t ${DOCKERHUB_NAMESPACE}/simple-chat-frontend:${GIT_SHA} \
                                 -t ${DOCKERHUB_NAMESPACE}/simple-chat-frontend:latest \
-                                -f Dockerfile .
+                                -f Dockerfile . --no-cache
                             docker push ${DOCKERHUB_NAMESPACE}/simple-chat-frontend:${GIT_SHA}
                             docker push ${DOCKERHUB_NAMESPACE}/simple-chat-frontend:latest
                         """
