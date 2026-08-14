@@ -5,8 +5,6 @@ from sqlalchemy import func
 from datetime import datetime
 from database import Base
 
-from repository.message import Message
-
 class User(Base):
     __tablename__ = "users"
 
