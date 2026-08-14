@@ -65,27 +65,6 @@ async def saved_message(db_session):
 
 # ── Firebase mocking ──────────────────────────────────────────────────────────
 
-@pytest.fixture(autouse=False)
-def mock_firebase():
-    with patch("core.firebase.auth.verify_id_token") as mock:
-        mock.return_value = {
-            "uid": "test-uid-123",
-            "email": "test@example.com"
-        }
-        yield mock
-
-@pytest.fixture(autouse=False)  
-def mock_firebase_other_user():
-    with patch("core.firebase.auth.verify_id_token") as mock:
-        mock.return_value = {
-            "uid": "other-uid-456",
-            "email": "other@example.com"
-        }
-        yield mock
-
-
-# ── User mocking ──────────────────────────────────────────────────────────────
-
 @pytest.fixture
 def mock_firebase():
     with patch("core.firebase.auth.verify_id_token") as mock:
@@ -106,14 +85,16 @@ def mock_firebase_other():
         yield mock
 
 
+# ── User mocking ──────────────────────────────────────────────────────────────
+
 @pytest.fixture
 async def saved_user(db_session, mock_firebase):
     """Fixture to create and return a test user."""
-    user_data = {
-        "id": "test-uid-123",
-        "google_display_name": "Test User",
-        "app_display_name": "Test User"
-    }
+    user_data = UserCreate(
+        id="test-uid-123",
+        google_display_name="Test User",
+        app_display_name="Test User"
+    )
     user = await create_user(db_session, user_data)
     return user
 

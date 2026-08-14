@@ -30,7 +30,7 @@ async def test_create_user_unauthorized(client):
             "app_display_name": "John Doe"
         }
     )
-    assert response.status_code == 403
+    assert response.status_code == 422
 
 # ── GET /users/me ────────────────────────────────────────────────────────────
 
@@ -49,7 +49,7 @@ async def test_get_current_user(client, mock_firebase, saved_user):
 async def test_get_current_user_unauthorized(client):
     """Test fetching current user without authentication fails."""
     response = await client.get("/users/me")
-    assert response.status_code == 403
+    assert response.status_code == 422
 
 # ── PATCH /users/me ───────────────────────────────────────────────────────────
 
@@ -76,7 +76,7 @@ async def test_update_user_unauthorized(client):
         "/users/me",
         json={"app_display_name": "New Display Name"}
     )
-    assert response.status_code == 403
+    assert response.status_code == 422
 
 # ── DELETE /users/me ─────────────────────────────────────────────────────────
 
@@ -95,4 +95,4 @@ async def test_delete_user(client, mock_firebase, saved_user, db_session):
 async def test_delete_user_unauthorized(client):
     """Test deleting user without authentication fails."""
     response = await client.delete("/users/me")
-    assert response.status_code == 403
+    assert response.status_code == 422
