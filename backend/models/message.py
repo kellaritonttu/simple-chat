@@ -5,6 +5,7 @@ from sqlalchemy import ForeignKey, func
 from datetime import datetime
 from database import Base
 
+from models.user import User
 
 class Message(Base):
     __tablename__ = "messages"
@@ -17,3 +18,9 @@ class Message(Base):
         default  = None,
         onupdate = func.now()
     )
+
+    user: Mapped[User] = relationship("User")
+
+    @property
+    def display_name(self) -> str | None:
+        return self.user.display_name if self.user else None

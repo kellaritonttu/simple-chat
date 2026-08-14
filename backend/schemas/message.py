@@ -15,7 +15,7 @@ class MessageRead(BaseModel):
     id:           int
     text:         str
     user_id:      str
-    display_name: str | None = None  # joined from users table
+    display_name: str | None = None
     created_at:   datetime
     edited_at:    Optional[datetime] = None
 

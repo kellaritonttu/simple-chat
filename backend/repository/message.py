@@ -1,16 +1,25 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 from sqlalchemy import select
 from models.message import Message
 from schemas.message import MessageCreate
 
 
 async def get_all_messages(db: AsyncSession) -> list[Message]:
-    result = await db.execute(select(Message).order_by(Message.created_at))
-    return list(result.scalars().all())
+    result = await db.execute(
+        select(Message)
+        .options(joinedload(Message.user))
+        .order_by(Message.created_at)
+    )
+    return result.scalars().all()
 
 
 async def get_message_by_id(db: AsyncSession, message_id: int) -> Message | None:
-    result = await db.execute(select(Message).where(Message.id == message_id))
+    result = await db.execute(
+        select(Message)
+        .options(joinedload(Message.user))
+        .where(Message.id == message_id)
+    )
     return result.scalar_one_or_none()
 
 
