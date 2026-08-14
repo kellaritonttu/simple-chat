@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { auth, signInWithGoogle, logout } from '$lib/firebase';
-  import { onAuthStateChanged } from 'firebase/auth';
+  import { onAuthStateChanged, type User } from 'firebase/auth';
 
   interface Message {
     id: number;
@@ -12,26 +12,28 @@
     edited_at: string | null;
   }
 
-  let messages = $state<Message[]>([]);
-  let input = $state('');
-  let interval: ReturnType<typeof setInterval>;
-
-  let currentUserId = $state<string | null>(null);
-  let currentUser = $state.raw<any>(null);
-  let token = $state<string | null>(null);
+  // ── Reactive UI state (plain/serializable only) ───────────────────────────
+  let messages    = $state<Message[]>([]);
+  let input       = $state('');
+  let token       = $state<string | null>(null);
   let displayName = $state('');
   let newDisplayName = $state('');
   let showAccount = $state(false);
+  let editingId   = $state<number | null>(null);
+  let editText    = $state('');
 
-  // State to track editing
-  let editingId = $state<number | null>(null);
-  let editText = $state('');
+  let currentUser = $state<{ uid: string } | null>(null);
 
+  // ── Firebase User — lives outside Svelte's reactive system ───────────────
+  let firebaseUser: User | null = null;
+
+  let interval: ReturnType<typeof setInterval>;
   const API = '/api';
 
+// ─── Helpers ──────────────────────────────────────────────────────────────
   async function getHeaders(): Promise<HeadersInit> {
-    if (currentUser) {
-      token = await currentUser.getIdToken(); // refreshes if expired
+    if (firebaseUser) {
+      token = await firebaseUser.getIdToken(); // always fresh
     }
     return {
       'Content-Type': 'application/json',
@@ -40,22 +42,31 @@
   }
 
   async function loadMessages() {
-    const res = await fetch('/api/messages/', {
-      headers: await getHeaders()
-    });
-    messages = await res.json();
+    try {
+      const res = await fetch(`${API}/messages/`, {
+        headers: await getHeaders()
+      });
+      if (!res.ok) {
+        console.error('loadMessages failed:', res.status, await res.text());
+        return;
+      }
+      messages = await res.json();
+    } catch (err) {
+      console.error('loadMessages error:', err);
+    }
   }
 
   async function sendMessage() {
-      if (!input.trim()) return;
-    
-      const res = await fetch('/api/messages/', {
-        method: 'POST',
-        headers: await getHeaders(),
-        body: JSON.stringify({ text: input }),
-      });
-    
+    if (!input.trim()) return;
+    const res = await fetch(`${API}/messages/`, {
+      method: 'POST',
+      headers: await getHeaders(),
+      body: JSON.stringify({ text: input })
+    });
+    if (res.ok) {
       input = '';
+      await loadMessages(); // show the message immediately, don't wait for poll
+    }
   }
 
   function startEdit(message: Message) {
@@ -65,18 +76,16 @@
 
   function cancelEdit() {
     editingId = null;
-    editText = '';
+    editText  = '';
   }
 
   async function saveEdit(id: number) {
     if (!editText.trim()) return;
-
     const res = await fetch(`${API}/messages/${id}`, {
       method: 'PATCH',
       headers: await getHeaders(),
-      body: JSON.stringify({ text: editText }),
+      body: JSON.stringify({ text: editText })
     });
-
     if (res.ok) {
       const updated = await res.json();
       messages = messages.map((m) => (m.id === id ? updated : m));
@@ -87,9 +96,8 @@
   async function deleteMessage(id: number) {
     const res = await fetch(`${API}/messages/${id}`, {
       method: 'DELETE',
-      headers: await getHeaders(),
+      headers: await getHeaders()
     });
-
     if (res.ok) {
       messages = messages.filter((m) => m.id !== id);
     }
@@ -97,51 +105,44 @@
 
   async function updateDisplayName() {
     if (!newDisplayName.trim()) return;
-
-    const res = await fetch('/api/users/me', {
+    const res = await fetch(`${API}/users/me`, {
       method: 'PATCH',
       headers: await getHeaders(),
-      body: JSON.stringify({ display_name: newDisplayName }),
+      body: JSON.stringify({ display_name: newDisplayName })
     });
-
     if (res.ok) {
-      // don't touch currentUser here — it must stay the real Firebase User
-      // object so getIdToken() keeps working. Track the shown name separately.
-      displayName = newDisplayName;
+      displayName    = newDisplayName;
       newDisplayName = '';
-      showAccount = false;
+      showAccount    = false;
     }
   }
 
   async function deleteAccount() {
     if (!confirm('Delete your account and all messages?')) return;
-    
-    await fetch('/api/users/me', {
+    await fetch(`${API}/users/me`, {
       method: 'DELETE',
-      headers: await getHeaders(),
+      headers: await getHeaders()
     });
-    
     await logout();
   }
 
   onMount(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
-      currentUser = user;
+      // Keep Firebase User in plain variable; only poke Svelte with plain data
+      firebaseUser = user;
+      currentUser  = user ? { uid: user.uid } : null;
+
       if (user) {
-        token = await user.getIdToken();
+        token       = await user.getIdToken();
         displayName = user.displayName || user.email || '';
 
-        // register in backend on first login — idempotent
-        await fetch('/api/users/', {
+        await fetch(`${API}/users/`, {
           method: 'POST',
           headers: await getHeaders(),
-          body: JSON.stringify({
-            id: user.uid,
-            display_name: displayName
-          }),
+          body: JSON.stringify({ id: user.uid, display_name: displayName })
         });
 
-        loadMessages();
+        await loadMessages();
         interval = setInterval(loadMessages, 3000);
       } else {
         clearInterval(interval);
