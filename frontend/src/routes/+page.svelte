@@ -19,6 +19,7 @@
   let currentUserId = $state<string | null>(null);
   let currentUser = $state<any>(null);
   let token = $state<string | null>(null);
+  let displayName = $state('');
   let newDisplayName = $state('');
   let showAccount = $state(false);
 
@@ -96,15 +97,17 @@
 
   async function updateDisplayName() {
     if (!newDisplayName.trim()) return;
-    
+
     const res = await fetch('/api/users/me', {
       method: 'PATCH',
       headers: await getHeaders(),
       body: JSON.stringify({ display_name: newDisplayName }),
     });
-    
+
     if (res.ok) {
-      currentUser = { ...currentUser, displayName: newDisplayName };
+      // don't touch currentUser here — it must stay the real Firebase User
+      // object so getIdToken() keeps working. Track the shown name separately.
+      displayName = newDisplayName;
       newDisplayName = '';
       showAccount = false;
     }
@@ -126,6 +129,7 @@
       currentUser = user;
       if (user) {
         token = await user.getIdToken();
+        displayName = user.displayName || user.email || '';
 
         // register in backend on first login — idempotent
         await fetch('/api/users/', {
@@ -133,7 +137,7 @@
           headers: await getHeaders(),
           body: JSON.stringify({
             id: user.uid,
-            display_name: user.displayName || user.email
+            display_name: displayName
           }),
         });
 
@@ -176,7 +180,7 @@
       <div class="flex justify-between items-center mb-4">
         <h1 class="text-2xl font-bold">Chat</h1>
         <div class="flex items-center gap-3">
-          <span class="text-sm text-gray-600">{currentUser.displayName}</span>
+          <span class="text-sm text-gray-600">{displayName}</span>
           <button onclick={() => showAccount = !showAccount} class="text-sm text-blue-500">
             Account
           </button>
@@ -214,7 +218,34 @@
 
       <div class="flex flex-col gap-2 mb-4">
         {#each messages as message (message.id)}
-          <!-- Message content -->
+          <div class="border rounded p-2">
+            {#if editingId === message.id}
+              <div class="flex gap-2">
+                <input
+                  class="flex-1 border rounded p-1 text-sm"
+                  bind:value={editText}
+                  onkeydown={(e) => e.key === 'Enter' && saveEdit(message.id)}
+                />
+                <button class="text-sm text-blue-500" onclick={() => saveEdit(message.id)}>Save</button>
+                <button class="text-sm text-gray-500" onclick={cancelEdit}>Cancel</button>
+              </div>
+            {:else}
+              <div class="flex justify-between items-start gap-2">
+                <div>
+                  <strong>{message.display_name}</strong>: {message.text}
+                  {#if message.edited_at}
+                    <span class="text-xs text-gray-400">(edited)</span>
+                  {/if}
+                </div>
+                {#if message.user_id === currentUser?.uid}
+                  <div class="flex gap-2 shrink-0">
+                    <button class="text-xs text-blue-500" onclick={() => startEdit(message)}>Edit</button>
+                    <button class="text-xs text-red-500" onclick={() => deleteMessage(message.id)}>Delete</button>
+                  </div>
+                {/if}
+              </div>
+            {/if}
+          </div>
         {/each}
       </div>
 
