@@ -19,7 +19,7 @@ async def register(
 
     existing = await get_user_by_id(db, data.id)
     if existing:
-        return existing  # idempotent — return existing user on re-register
+        return existing
 
     return await create_user(db, data)
 

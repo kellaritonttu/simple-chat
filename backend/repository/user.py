@@ -10,19 +10,24 @@ async def get_user_by_id(db: AsyncSession, user_id: str) -> User | None:
 
 
 async def create_user(db: AsyncSession, data: UserCreate) -> User:
-    user = User(id=data.id, display_name=data.display_name)
+    app_display_name = data.app_display_name or data.google_display_name
+
+    user = User(
+        id=data.id,
+        google_display_name=data.google_display_name,
+        app_display_name=app_display_name
+    )
     db.add(user)
     await db.commit()
     await db.refresh(user)
     return user
 
 
-async def update_display_name(db: AsyncSession, user: User, display_name: str) -> User:
-    user.display_name = display_name
+async def update_display_name(db: AsyncSession, user: User, app_display_name: str) -> User:
+    user.app_display_name = app_display_name
     await db.commit()
     await db.refresh(user)
     return user
-
 
 async def delete_user(db: AsyncSession, user: User) -> None:
     await db.delete(user)

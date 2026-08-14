@@ -15,12 +15,12 @@ class Message(Base):
     user_id:    Mapped[str] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     edited_at:  Mapped[Optional[datetime]] = mapped_column(
-        default  = None,
-        onupdate = func.now()
+        default=None,
+        onupdate=func.now()
     )
 
-    user: Mapped[User] = relationship("User")
+    user: Mapped[User] = relationship("User", back_populates="messages")
 
     @property
     def display_name(self) -> str | None:
-        return self.user.display_name if self.user else None
+        return self.user.app_display_name if self.user else None
