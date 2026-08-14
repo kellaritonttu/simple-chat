@@ -1,9 +1,15 @@
+import asyncio
+
 from fastapi import APIRouter, HTTPException, Depends
+from fastapi.responses import StreamingResponse
 from database import AsyncSessionDep
 from schemas.message import *
 from repository.message import *
 
 from core.firebase import get_current_user
+from core.broadcaster import message_broadcaster
+from schemas.message import MessageCreate, MessageUpdate, MessageRead
+
 
 router = APIRouter(prefix="/messages", tags=["messages"])
 
@@ -27,7 +33,11 @@ async def send_message(
     db: AsyncSessionDep,
     current_user: dict = Depends(get_current_user),
 ):
-    return await create_message(db, data, user_id=current_user["uid"])
+    message =  await create_message(db, data, user_id=current_user["uid"])
+
+    msg_read = MessageRead.model_validate(message)
+    await message_broadcaster.publish("new", msg_read.model_dump())
+    return message
 
 
 @router.patch("/{message_id}", response_model=MessageRead)
@@ -37,12 +47,18 @@ async def edit_message(
     db: AsyncSessionDep,
     current_user: dict = Depends(get_current_user),
 ):
+
     message = await get_message_by_id(db, message_id)
+
     if not message:
         raise HTTPException(status_code=404, detail="Message not found")
     if message.user_id != current_user["uid"]:
         raise HTTPException(status_code=403, detail="Forbidden")
-    return await update_message(db, message, data.text)
+
+    updated = await update_message(db, message, data.text)
+    msg_read = MessageRead.model_validate(updated)
+    await message_broadcaster.publish("update", msg_read.model_dump())
+    return updated
 
 
 @router.delete("/{message_id}", status_code=204)
@@ -52,8 +68,37 @@ async def remove_message(
     current_user: dict = Depends(get_current_user),
 ):
     message = await get_message_by_id(db, message_id)
+
     if not message:
         raise HTTPException(status_code=404, detail="Message not found")
     if message.user_id != current_user["uid"]:
         raise HTTPException(status_code=403, detail="Forbidden")
+
     await delete_message(db, message)
+    await message_broadcaster.publish("delete", {"id": message_id})
+
+
+@router.get("/stream")
+async def stream_messages():
+    queue = message_broadcaster.subscribe()
+
+    async def event_generator():
+        try:
+            yield ":connected\n\n"
+            while True:
+                msg = await queue.get()
+                yield msg
+        except asyncio.CancelledError:
+            raise
+        finally:
+            message_broadcaster.unsubscribe(queue)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )

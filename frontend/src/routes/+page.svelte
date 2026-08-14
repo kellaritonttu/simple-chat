@@ -32,8 +32,7 @@
 
   // ── Firebase User ───────────────────────────────────────────────────────
   let firebaseUser: User | null = null;
-  let interval:     ReturnType<typeof setInterval>;
-  let intervalId: ReturnType<typeof setInterval> | null = null;
+  let es: EventSource | null = null;
   const API = '/api';
 
 
@@ -90,7 +89,6 @@
     });
     if (res.ok) {
       input = '';
-      await loadMessages();
     }
   }
 
@@ -112,8 +110,6 @@
       body: JSON.stringify({ text: editText })
     });
     if (res.ok) {
-      const updated = await res.json();
-      messages = messages.map((m) => (m.id === id ? updated : m));
       cancelEdit();
     }
   }
@@ -123,9 +119,7 @@
       method: 'DELETE',
       headers: await getHeaders()
     });
-    if (res.ok) {
-      messages = messages.filter((m) => m.id !== id);
-    }
+    if (res.ok) {}
   }
 
   async function updateDisplayName() {
@@ -154,13 +148,38 @@
     await logout();
   }
 
+  function connectStream() {
+    if (es) es.close();
+
+    es = new EventSource(`${API}/messages/stream`);
+
+    es.addEventListener('new', (e) => {
+      const msg = JSON.parse(e.data);
+      // Deduplicate in case we already have it
+      if (!messages.find((m) => m.id === msg.id)) {
+        messages = [...messages, msg];
+      }
+    });
+
+    es.addEventListener('update', (e) => {
+      const msg = JSON.parse(e.data);
+      messages = messages.map((m) => (m.id === msg.id ? msg : m));
+    });
+
+    es.addEventListener('delete', (e) => {
+      const data = JSON.parse(e.data);
+      messages = messages.filter((m) => m.id !== data.id);
+    });
+
+    es.onerror = () => {
+      es?.close();
+      // Reconnect after 3 seconds if connection drops
+      setTimeout(connectStream, 3000);
+    };
+  }
+
   onMount(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
-      if (intervalId) {
-        clearInterval(intervalId);
-        intervalId = null;
-      }
-
       firebaseUser = user;
       currentUser = user ? { uid: user.uid } : null;
 
@@ -173,16 +192,17 @@
             body: JSON.stringify({
               id: user.uid,
               google_display_name: user.displayName || '',
-              app_display_name: user.displayName || ''
-            })
+              app_display_name: user.displayName || '',
+            }),
           });
           await fetchAppUser();
           await loadMessages();
-          intervalId = setInterval(loadMessages, 3000);
+          connectStream();
         } catch (err) {
           console.error('Setup failed:', err);
         }
       } else {
+        es?.close()
         messages = [];
         currentAppUser = null;
         token = null;
@@ -191,7 +211,7 @@
 
     return () => {
       unsub();
-      if (intervalId) clearInterval(intervalId);
+      es?.close()
     };
   });
 </script>
