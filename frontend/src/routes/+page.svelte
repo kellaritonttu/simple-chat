@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { auth, signInWithGoogle, logout } from '$lib/firebase';
-  import { onAuthStateChanged, type User } from 'firebase/auth';
+  import { onAuthStateChanged, type User, signOut } from 'firebase/auth';
 
   interface Message {
     id: number;
@@ -28,29 +28,27 @@
   let editingId      = $state<number | null>(null);
   let editText       = $state('');
   let currentUser    = $state<{ uid: string } | null>(null);
-  let currentAppUser = $state<AppUser | null>(null); // Track app user data
+  let currentAppUser = $state<AppUser | null>(null);
 
   // ── Firebase User ───────────────────────────────────────────────────────
   let firebaseUser: User | null = null;
   let interval:     ReturnType<typeof setInterval>;
+  let intervalId: ReturnType<typeof setInterval> | null = null;
   const API = '/api';
 
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
   async function getHeaders(): Promise<HeadersInit> {
     if (!firebaseUser) {
-      console.error('getHeaders: firebaseUser is null');
-      return { 'Content-Type': 'application/json' };
+      throw new Error('Not authenticated');
     }
-    try {
-      token = await firebaseUser.getIdToken(false);
-    } catch (err) {
-      console.error('getIdToken failed:', err);
-      token = null;
+    const t = await firebaseUser.getIdToken(false);
+    if (!t) {
+      throw new Error('No token');
     }
     return {
       'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      'Authorization': `Bearer ${t}`
     };
   }
 
@@ -158,33 +156,42 @@
 
   onMount(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+
       firebaseUser = user;
-      currentUser  = user ? { uid: user.uid } : null;
+      currentUser = user ? { uid: user.uid } : null;
 
       if (user) {
-        token = await user.getIdToken();
-        await fetch(`${API}/users/`, {
-          method: 'POST',
-          headers: await getHeaders(),
-          body: JSON.stringify({
-            id: user.uid,
-            google_display_name: user.displayName || '',
-            app_display_name: user.displayName || ''
-          })
-        });
-        await fetchAppUser();
-        await loadMessages();
-        interval = setInterval(loadMessages, 3000);
+        try {
+          token = await user.getIdToken();
+          await fetch(`${API}/users/`, {
+            method: 'POST',
+            headers: await getHeaders(),
+            body: JSON.stringify({
+              id: user.uid,
+              google_display_name: user.displayName || '',
+              app_display_name: user.displayName || ''
+            })
+          });
+          await fetchAppUser();
+          await loadMessages();
+          intervalId = setInterval(loadMessages, 3000);
+        } catch (err) {
+          console.error('Setup failed:', err);
+        }
       } else {
-        clearInterval(interval);
         messages = [];
         currentAppUser = null;
+        token = null;
       }
     });
 
     return () => {
       unsub();
-      clearInterval(interval);
+      if (intervalId) clearInterval(intervalId);
     };
   });
 </script>
