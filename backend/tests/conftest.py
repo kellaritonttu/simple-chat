@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
 
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.pool import NullPool
@@ -101,3 +101,9 @@ async def saved_message(db_session, saved_user):
         MessageCreate(text="Hello world"),
         user_id=saved_user.id
     )
+
+
+@pytest.fixture(autouse=True)
+def mock_broadcast():
+    with patch('core.broadcast.message_broadcaster.publish', new_callable=AsyncMock) as mock:
+        yield mock
