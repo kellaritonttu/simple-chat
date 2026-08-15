@@ -105,5 +105,5 @@ async def saved_message(db_session, saved_user):
 
 @pytest.fixture(autouse=True)
 def mock_broadcast():
-    with patch('core.broadcast.message_broadcaster.publish', new_callable=AsyncMock) as mock:
+    with patch('core.broadcaster.message_broadcaster.publish', new_callable=AsyncMock) as mock:
         yield mock
