@@ -19,3 +19,6 @@ coverage.xml
 *.tfstate.backup
 .terraform/
 terraform.tfvars
+
+# Jenkins - cloning my jenkins-setup repo
+jenkins/
