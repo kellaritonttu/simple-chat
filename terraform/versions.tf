@@ -7,4 +7,12 @@ terraform {
       version = "~> 5.0"
     }
   }
+
+  cloud {
+    organization = "kellaritonttu"
+
+    workspaces {
+      name = "simple-chat"
+    }
+  }
 }
