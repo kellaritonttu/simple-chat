@@ -11,22 +11,16 @@ pipeline {
 
         stage('Test backend') {
             steps {
-                sh '''
-                    cd ./backend
-                    docker-compose -f docker-compose.test.yaml down -v || true
-                    docker-compose -f docker-compose.test.yaml up --build --abort-on-container-exit
-                '''
+                runTests(
+                    workDir:     'backend',
+                    composeFile: 'docker-compose.test.yaml'
+                )       
             }
         }
     }
 
     post {
         always {
-            // Cleanup
-            sh '''
-                cd ./backend
-                docker-compose -f docker-compose.test.yaml down -v || true
-            '''
             cleanWs()
         }
     }
