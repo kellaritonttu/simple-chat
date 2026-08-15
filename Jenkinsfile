@@ -1,3 +1,5 @@
+@Library('shared') _
+
 pipeline {
     agent any
 
@@ -65,36 +67,30 @@ pipeline {
                     def tfVarsFile = 'terraform/terraform.image.auto.tfvars'
                     def branchName = env.GIT_BRANCH.replace('origin/', '')
 
+                    // Clone github repo
+                    cloneTerraformRepo(
+                        repo:   repoUrl,
+                        branch: branchName,
+                        dir:    'terraform-infra'
+                    )
+
                     // Update the Terraform file
-                    sh """
-                        sed -i 's/image_tag[[:space:]]*=.*/image_tag = \"${GIT_SHA}\"/' ${tfVarsFile}
-                        cat ${tfVarsFile}
-                    """
-
-                    // Configure Git
-                    sh """
-                        git config user.email "jenkins@ci"
-                        git config user.name "Jenkins"
-                    """
-
-                    // Stage and commit changes
-                    sh """
-                        git add ${tfVarsFile}
-                        if ! git diff --staged --quiet; then
-                            git commit -m "ci: update image tag to ${GIT_SHA}"
-                        fi
-                    """
-
-                    // Push changes
-                    withCredentials([usernamePassword(
-                        credentialsId: 'github-credentials',
-                        usernameVariable: 'GITHUB_USER',
-                        passwordVariable: 'GITHUB_TOKEN'
-                    )]) {
-                        sh """
-                            git push https://\${GITHUB_USER}:\${GITHUB_TOKEN}@${repoUrl} HEAD:${branchName}
-                        """
+                    dir('terraform-infra') {
+                        updateImageTag(
+                            file: tfVarsFile,
+                            key:  'image_tag',
+                            tag:  GIT_SHA
+                        )
                     }
+
+
+                    // Commit changes and push changes
+                    pushTerraformRepo(
+                        branch:  branchName,
+                        file:    tfVarsFile,
+                        message: "ci: update image tag to ${GIT_SHA}",
+                        dir:     'terraform-infra'
+                    )
                 }
             }
         }
