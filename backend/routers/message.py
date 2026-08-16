@@ -5,6 +5,8 @@ from fastapi.responses import StreamingResponse
 from database import AsyncSessionDep
 from schemas.message import *
 from repository.message import *
+from firebase_admin import auth
+
 
 from core.firebase import get_current_user
 from core.broadcaster import message_broadcaster
@@ -36,7 +38,7 @@ async def send_message(
     message =  await create_message(db, data, user_id=current_user["uid"])
 
     msg_read = MessageRead.model_validate(message)
-    await message_broadcaster.publish("new", msg_read.model_dump())
+    await message_broadcaster.publish("new", msg_read.model_dump(mode="json"))
     return message
 
 
@@ -57,7 +59,7 @@ async def edit_message(
 
     updated = await update_message(db, message, data.text)
     msg_read = MessageRead.model_validate(updated)
-    await message_broadcaster.publish("update", msg_read.model_dump())
+    await message_broadcaster.publish("update", msg_read.model_dump(mode="json"))
     return updated
 
 
@@ -79,7 +81,13 @@ async def remove_message(
 
 
 @router.get("/stream")
-async def stream_messages():
+async def stream_messages(token: str):
+    try:
+        decoded = auth.verify_id_token(token)
+        uid = decoded["uid"]
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
     queue = message_broadcaster.subscribe()
 
     async def event_generator():

@@ -151,32 +151,37 @@
   function connectStream() {
     if (es) es.close();
 
-    es = new EventSource(`${API}/messages/stream`);
+    if (!firebaseUser) return;
 
-    es.addEventListener('new', (e) => {
-      const msg = JSON.parse(e.data);
-      // Deduplicate in case we already have it
-      if (!messages.find((m) => m.id === msg.id)) {
-        messages = [...messages, msg];
-      }
-    });
+    firebaseUser.getIdToken().then((t) => {
+      es = new EventSource(`${API}/messages/stream?token=${t}`);
 
-    es.addEventListener('update', (e) => {
-      const msg = JSON.parse(e.data);
-      messages = messages.map((m) => (m.id === msg.id ? msg : m));
-    });
+      es.addEventListener('new', (e) => {
+        const msg = JSON.parse(e.data);
+        if (!messages.find((m) => m.id === msg.id)) {
+          messages = [...messages, msg];
+        }
+      });
 
-    es.addEventListener('delete', (e) => {
-      const data = JSON.parse(e.data);
-      messages = messages.filter((m) => m.id !== data.id);
-    });
+      es.addEventListener('update', (e) => {
+        const msg = JSON.parse(e.data);
+        messages = messages.map((m) => (m.id === msg.id ? msg : m));
+      });
 
-    es.onerror = () => {
-      es?.close();
-      // Reconnect after 3 seconds if connection drops
-      setTimeout(connectStream, 3000);
-    };
+      es.addEventListener('delete', (e) => {
+        const data = JSON.parse(e.data);
+        messages = messages.filter((m) => m.id !== data.id);
+      });
+
+      es.onerror = () => {
+        es?.close();
+        // Reconnect after 3 seconds if connection drops
+        setTimeout(connectStream, 3000);
+      };
+    })
   }
+
+
 
   onMount(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
