@@ -83,9 +83,9 @@ pipeline {
                         )
                     }
 
-
                     // Commit changes and push changes
                     pushTerraformRepo(
+                        repo:    'https://github.com/kellaritonttu/simple-chat.git',
                         branch:  branchName,
                         file:    tfVarsFile,
                         message: "ci: update image tag to ${GIT_SHA}",
