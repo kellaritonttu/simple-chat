@@ -78,6 +78,14 @@ pipeline {
                 }
             }
         }
+
+        stage('Deploy') {
+            steps {
+                terraformDeploy(
+                    terraformDir: 'terraform'
+                )
+            }
+        }
     }
 
     post {
