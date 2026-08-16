@@ -19,13 +19,7 @@ pipeline {
 
         stage('Login to Docker Hub') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-credentials',
-                    usernameVariable: 'DOCKERHUB_USER',
-                    passwordVariable: 'DOCKERHUB_TOKEN'
-                )]) {
-                    sh 'echo $DOCKERHUB_TOKEN | docker login -u $DOCKERHUB_USER --password-stdin'
-                }
+                dockerLogin()
             }
         }
 
@@ -33,27 +27,20 @@ pipeline {
             parallel {
                 stage('backend') {
                     steps {
-                        sh """
-                            docker build \
-                                -t ${DOCKERHUB_NAMESPACE}/simple-chat-backend:${GIT_SHA} \
-                                -t ${DOCKERHUB_NAMESPACE}/simple-chat-backend:latest \
-                                -f backend/Dockerfile . --no-cache
-                            docker push ${DOCKERHUB_NAMESPACE}/simple-chat-backend:${GIT_SHA}
-                            docker push ${DOCKERHUB_NAMESPACE}/simple-chat-backend:latest
-                        """
+                        dockerBuildPush(
+                            image:      "${env.DOCKERHUB_NAMESPACE}/simple-chat-backend", 
+                            tag:        env.GIT_SHA, 
+                            dockerfile: "backend/Dockerfile"
+                        )
                     }
                 }
                 stage('frontend') {
                     steps {
-                        sh """
-                            cd ./frontend
-                            docker build \
-                                -t ${DOCKERHUB_NAMESPACE}/simple-chat-frontend:${GIT_SHA} \
-                                -t ${DOCKERHUB_NAMESPACE}/simple-chat-frontend:latest \
-                                -f Dockerfile . --no-cache
-                            docker push ${DOCKERHUB_NAMESPACE}/simple-chat-frontend:${GIT_SHA}
-                            docker push ${DOCKERHUB_NAMESPACE}/simple-chat-frontend:latest
-                        """
+                        dockerBuildPush(
+                            image:      "${env.DOCKERHUB_NAMESPACE}/simple-chat-frontend", 
+                            tag:        env.GIT_SHA, 
+                            dockerfile: "frontend/Dockerfile"
+                        )
                     }
                 }
             }
@@ -62,34 +49,29 @@ pipeline {
         stage('Update Terraform') {
             steps {
                 script {
-                    // Define variables
-                    def repoUrl = 'github.com/kellaritonttu/simple-chat.git'
                     def tfVarsFile = 'terraform/terraform.image.auto.tfvars'
                     def branchName = env.GIT_BRANCH.replace('origin/', '')
 
-                    // Clone github repo
-                    cloneTerraformRepo(
-                        repo:   repoUrl,
-                        branch: branchName,
-                        dir:    'terraform-infra'
-                    )
+                    // Config Jenkins email in git
+                    gitConfig()
 
                     // Update the Terraform file
-                    dir('terraform-infra') {
-                        updateImageTag(
-                            file: tfVarsFile,
-                            key:  'image_tag',
-                            tag:  GIT_SHA
-                        )
-                    }
+                    updateImageTag(
+                        file: tfVarsFile,
+                        key:  'image_tag',
+                        tag:  env.GIT_SHA
+                    )
 
-                    // Commit changes and push changes
-                    pushTerraformRepo(
-                        repo:    'https://github.com/kellaritonttu/simple-chat.git',
-                        branch:  branchName,
-                        file:    tfVarsFile,
-                        message: "ci: update image tag to ${GIT_SHA}",
-                        dir:     'terraform-infra'
+                    // Add file to git 
+                    gitAdd(file: tfVarsFile)
+
+                    // Commit Terraform image_tag variable change
+                    gitCommit(message: "ci: update image tag to ${env.GIT_SHA}")
+
+                    // Push changes
+                    gitPush(
+                        repo:   env.GIT_URL,
+                        branch: env.GIT_BRANCH.replace('origin/', '')
                     )
                 }
             }
@@ -98,7 +80,9 @@ pipeline {
 
     post {
         always {
-            sh 'docker logout || true'
+            dockerClean(image: "${env.DOCKERHUB_NAMESPACE}/simple-chat-backend:${env.GIT_SHA}")
+            dockerClean(image: "${env.DOCKERHUB_NAMESPACE}/simple-chat-frontend:${env.GIT_SHA}")
+            dockerLogout()
             cleanWs()
         }
     }
