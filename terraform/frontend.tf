@@ -14,7 +14,7 @@ resource "google_cloud_run_service" "frontend" {
     spec {
       service_account_name = google_service_account.cloud_run.email
       containers {
-        image = "${var.dockerhub_username}/${var.frontend_image}:latest"
+        image = "${var.dockerhub_username}/${var.frontend_image}:${var.image_tag}"
         ports {
           container_port = 3000
         }

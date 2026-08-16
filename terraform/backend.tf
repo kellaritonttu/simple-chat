@@ -15,7 +15,7 @@ resource "google_cloud_run_service" "backend" {
     spec {
       service_account_name = google_service_account.cloud_run.email
       containers {
-        image = "${var.dockerhub_username}/${var.backend_image}:latest"
+        image = "${var.dockerhub_username}/${var.backend_image}:${var.image_tag}"
         ports {
           container_port = 8000
         }
