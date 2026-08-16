@@ -13,7 +13,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                gitCheckout(branch: "dev")
+                gitCheckout()
             }
         }
 
