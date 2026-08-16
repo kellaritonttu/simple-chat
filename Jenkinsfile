@@ -78,8 +78,10 @@ pipeline {
 
     post {
         always {
-            dockerClean(image: "${env.DOCKERHUB_NAMESPACE}/simple-chat-backend:${env.GIT_SHA}")
-            dockerClean(image: "${env.DOCKERHUB_NAMESPACE}/simple-chat-frontend:${env.GIT_SHA}")
+            dockerClean(images: [
+                "${env.DOCKERHUB_NAMESPACE}/simple-chat-backend:${env.GIT_SHA}", 
+                "${env.DOCKERHUB_NAMESPACE}/simple-chat-frontend:${env.GIT_SHA}"
+            ])
             dockerLogout()
             cleanWs()
         }
