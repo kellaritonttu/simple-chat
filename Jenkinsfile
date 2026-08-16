@@ -5,7 +5,7 @@ pipeline {
 
     environment {
         OWNER               = 'kellaritonttu'
-        GIT_SHA             = "${GIT_COMMIT[0..7]}"
+        GIT_SHA             = "${GIT_COMMIT?.substring(0, 7) ?: 'manual-trigger'}"
         DOCKERHUB_NAMESPACE = 'harhatilatonttu'
     }
 
@@ -13,7 +13,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                checkout scm
+                gitCheckout(branch: "dev")
             }
         }
 
@@ -52,38 +52,26 @@ pipeline {
             steps {
                 script {
                     def tfVarsFile = 'terraform/terraform.image.auto.tfvars'
-                    def branchName = env.GIT_BRANCH.replace('origin/', '')
+                    def branchName = (env.GIT_BRANCH ?: 'main').replace('origin/', '')
 
-                    // Config Jenkins email in git
                     gitConfig()
 
-                    // Update the Terraform file
                     updateImageTag(
                         file: tfVarsFile,
                         key:  'image_tag',
                         tag:  env.GIT_SHA
                     )
 
-                    // Add file to git 
                     gitAdd(file: tfVarsFile)
-
-                    // Commit Terraform image_tag variable change
                     gitCommit(message: "ci: update image tag to ${env.GIT_SHA}")
-
-                    // Push changes
-                    gitPush(
-                        repo:   env.GIT_URL,
-                        branch: env.GIT_BRANCH.replace('origin/', '')
-                    )
+                    gitPush(branch: branchName)
                 }
             }
         }
 
         stage('Deploy') {
             steps {
-                terraformDeploy(
-                    terraformDir: 'terraform'
-                )
+                terraformDeploy(terraformDir: 'terraform')
             }
         }
     }
