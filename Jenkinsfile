@@ -31,6 +31,7 @@ pipeline {
                             image:      "${env.DOCKERHUB_NAMESPACE}/simple-chat-backend", 
                             tag:        env.GIT_SHA, 
                             dockerfile: "backend/Dockerfile"
+                            context:    "backend"
                         )
                     }
                 }
@@ -40,6 +41,7 @@ pipeline {
                             image:      "${env.DOCKERHUB_NAMESPACE}/simple-chat-frontend", 
                             tag:        env.GIT_SHA, 
                             dockerfile: "frontend/Dockerfile"
+                            context:    "frontend"
                         )
                     }
                 }
