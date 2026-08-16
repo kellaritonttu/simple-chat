@@ -21,6 +21,38 @@ async def list_messages(db: AsyncSessionDep):
     return await get_all_messages(db)
 
 
+@router.get("/stream")
+async def stream_messages(token: str):
+    try:
+        decoded = auth.verify_id_token(token)
+        uid = decoded["uid"]
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    queue = message_broadcaster.subscribe()
+
+    async def event_generator():
+        try:
+            yield ":connected\n\n"
+            while True:
+                msg = await queue.get()
+                yield msg
+        except asyncio.CancelledError:
+            raise
+        finally:
+            message_broadcaster.unsubscribe(queue)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
 @router.get("/{message_id}", response_model=MessageRead)
 async def get_message(message_id: int, db: AsyncSessionDep):
     message = await get_message_by_id(db, message_id)
@@ -78,35 +110,3 @@ async def remove_message(
 
     await delete_message(db, message)
     await message_broadcaster.publish("delete", {"id": message_id})
-
-
-@router.get("/stream")
-async def stream_messages(token: str):
-    try:
-        decoded = auth.verify_id_token(token)
-        uid = decoded["uid"]
-    except Exception:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-    queue = message_broadcaster.subscribe()
-
-    async def event_generator():
-        try:
-            yield ":connected\n\n"
-            while True:
-                msg = await queue.get()
-                yield msg
-        except asyncio.CancelledError:
-            raise
-        finally:
-            message_broadcaster.unsubscribe(queue)
-
-    return StreamingResponse(
-        event_generator(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-        },
-    )
