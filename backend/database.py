@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from sqlalchemy.orm import DeclarativeBase
 from typing import AsyncGenerator, Annotated
 from fastapi import Depends
+
 from core.config import settings
 
 
@@ -14,6 +15,7 @@ async_engine = create_async_engine(
     echo   = True,
     pool_pre_ping = True,
 )
+
 
 AsyncSessionLocal = async_sessionmaker(
     bind   = async_engine,
@@ -28,8 +30,3 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 AsyncSessionDep = Annotated[AsyncSession, Depends(get_async_session)]
-
-
-async def create_db_and_tables():
-    async with async_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)

@@ -10,7 +10,10 @@ class Message(Base):
 
     id:         Mapped[int] = mapped_column(primary_key=True)
     text:       Mapped[str]
-    user_id:    Mapped[str] = mapped_column(ForeignKey("users.id"))
+    user_id:    Mapped[str] = mapped_column(
+        ForeignKey("users.id"),
+        server_default="system-legacy-user",
+    )
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     edited_at:  Mapped[Optional[datetime]] = mapped_column(
         default=None,
