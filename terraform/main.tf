@@ -41,6 +41,8 @@ module "backend" {
     FRONTEND_URL        = var.frontend_url
     FIREBASE_PROJECT_ID = var.project
   }
+
+  depends_on = [module.migrate]
 }
 
 module "frontend" {
@@ -65,6 +67,8 @@ module "frontend" {
       appId             = module.firebase.app_id
     })
   }
+
+  depends_on = [module.backend]
 }
 
 module "migrate" {
@@ -81,4 +85,12 @@ module "migrate" {
     DATABASE_URL = local.database_url
   }
 
+}
+
+resource "null_resource" "run_migration" {
+  depends_on = [module.migrate]
+
+  provisioner "local-exec" {
+    command = "gcloud run jobs execute ${module.migrate.job_name} --region=${var.region} --platform=managed"
+  }
 }
