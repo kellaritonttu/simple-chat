@@ -1,0 +1,20 @@
+FROM python:3.13-slim
+
+WORKDIR /app
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+
+COPY uv.lock .
+COPY pyproject.toml .
+
+COPY backend/pyproject.toml backend/
+COPY backend/alembic.ini backend/
+COPY backend/database.py backend/
+COPY backend/alembic/ backend/alembic/
+COPY backend/models/ backend/models/
+
+RUN uv sync --package backend --no-dev --frozen
+
+WORKDIR /app/backend
+
+CMD ["uv", "run", "--package", "backend", "alembic", "upgrade", "head"]
