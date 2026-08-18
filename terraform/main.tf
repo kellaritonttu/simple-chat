@@ -91,6 +91,6 @@ resource "null_resource" "run_migration" {
   depends_on = [module.migrate]
 
   provisioner "local-exec" {
-    command = "gcloud run jobs execute ${module.migrate.job_name} --region=${var.region} --platform=managed"
+    command = "gcloud run jobs execute db-migrate --region=${var.region} --platform=managed"
   }
 }
