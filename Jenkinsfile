@@ -25,6 +25,16 @@ pipeline {
 
         stage('Build and Push Images') {
             parallel {
+                stage('migrate') {
+                    steps {
+                        dockerBuildPush(
+                            image:      "${env.DOCKERHUB_NAMESPACE}/simple-chat-migrate", 
+                            tag:        env.GIT_SHA, 
+                            dockerfile: "backend/Dockerfile.migrate",
+                            context:    "."
+                        )
+                    }
+                }
                 stage('backend') {
                     steps {
                         dockerBuildPush(
@@ -80,7 +90,8 @@ pipeline {
         always {
             dockerClean(images: [
                 "${env.DOCKERHUB_NAMESPACE}/simple-chat-backend:${env.GIT_SHA}", 
-                "${env.DOCKERHUB_NAMESPACE}/simple-chat-frontend:${env.GIT_SHA}"
+                "${env.DOCKERHUB_NAMESPACE}/simple-chat-frontend:${env.GIT_SHA}",
+                "${env.DOCKERHUB_NAMESPACE}/simple-chat-migrate:${env.GIT_SHA}"
             ])
             dockerLogout()
             cleanWs()
