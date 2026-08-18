@@ -1,4 +1,4 @@
-# —— GCP ———————————————————————————————————————————————————————————————————————
+# __ GCP _______________________________________________________________________
 
 variable "project" {
   type        = string
@@ -6,52 +6,80 @@ variable "project" {
   sensitive   = true
 }
 
+variable "region" {
+  type        = string
+  description = "GCP Region"
+  default     = "us-west1"
+}
 
-# —— Cloud SQL —————————————————————————————————————————————————————————————————
+variable "service_account_id" {
+  type        = string
+  description = "Service account ID for Cloud Run"
+  default     = "cloud-run-sa"
+}
+
+# __ Cloud SQL _________________________________________________________________
 
 variable "db_name" {
-  description = "Cloud SQL Database Name"
   type        = string
-  default     = "messages_db"
+  description = "Cloud SQL database name"
+  default     = "chat_db"
 }
 
 variable "db_user" {
-  description = "Cloud SQL User"
   type        = string
-  default     = "app_user"
+  description = "Cloud SQL user"
+  default     = "admin"
 }
 
 variable "db_password" {
-  description = "Cloud SQL Password"
   type        = string
+  description = "Cloud SQL password"
   sensitive   = true
 }
 
 
-# —— Network variables —————————————————————————————————————————————————————————
-
-variable "region" {
-  type        = string
-  description = "GCP Region where our VPC would be"
-  default     = "us-west1"
-}
-
-
-# —— DockerHub —————————————————————————————————————————————————————————————————
+# __ Docker Hub ________________________________________________________________
 
 variable "dockerhub_username" {
-  description = "Docker Hub Username"
   type        = string
+  description = "Docker Hub username"
 }
 
 variable "backend_image" {
-  description = "Backend docker image name on Docker Hub"
   type        = string
+  description = "Backend image name on Docker Hub"
 }
 
 variable "frontend_image" {
-  description = "Frontend docker image name on Docker Hub"
   type        = string
+  description = "Frontend image name on Docker Hub"
+}
+
+variable "migrate_image" {
+  type        = string
+  description = "Migration image name on Docker Hub"
+}
+
+variable "image_tag" {
+  type        = string
+  description = "Docker image tag to deploy"
+  default     = "latest"
+}
+
+
+# __ Cloud Run _________________________________________________________________
+
+variable "frontend_port" {
+  type        = number
+  description = "Frontend Cloud Run port"
+  default     = 3000
+}
+
+variable "backend_port" {
+  type        = number
+  description = "Backend Cloud Run port"
+  default     = 8000
 }
 
 variable "frontend_url" {
@@ -60,39 +88,29 @@ variable "frontend_url" {
   default     = "*"
 }
 
-variable "image_tag" {
-  description = "Docker image tag to deploy"
+
+# __ Firebase __________________________________________________________________
+
+variable "app_display_name" {
   type        = string
-  default     = "latest"
+  description = "Firebase Web App for a Simple-App Auth"
+  default = "Simple-App Auth"
 }
 
-
-# —— Firebase —————————————————————————————————————————————————————————————————
-
-variable "apiKey" {
-  type = string
-  sensitive = true
+variable "google_oauth_client_id" {
+  type        = string
+  description = "Google OAuth 2.0 client ID for Firebase sign-in"
+  sensitive   = true
 }
 
-variable "authDomain" {
-  type      = string
-  sensitive = true
+variable "google_oauth_client_secret" {
+  type        = string
+  description = "Google OAuth 2.0 client secret for Firebase sign-in"
+  sensitive   = true
 }
 
-variable "projectId" {
-  type      = string
-  sensitive = true
-}
-
-variable "messagingSenderId" {
-  type = string
-}
-
-variable "appId" {
-  type      = string
-  sensitive = true
-}
-
-variable "storageBucket" {
-  type = string
+variable "authorized_domains" {
+  type        = list(string)
+  description = "Domains authorized for Firebase Auth OAuth redirects"
+  default     = ["localhost"]
 }

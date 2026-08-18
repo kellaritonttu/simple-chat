@@ -4,13 +4,14 @@ resource "google_project_service" "sqladmin" {
   disable_on_destroy = false
 }
 
-resource "google_sql_database_instance" "postgres" {
-  name = "message-instance"
-  database_version = "POSTGRES_15"
+resource "google_sql_database_instance" "this" {
+  name   = var.instance_name
   region = var.region
-
+  
+  database_version = "POSTGRES_15"
+  
   settings {
-    tier = "db-f1-micro"
+    tier = var.tier
     ip_configuration {
       ipv4_enabled = true
     }
@@ -23,13 +24,13 @@ resource "google_sql_database_instance" "postgres" {
   depends_on = [ google_project_service.sqladmin ]
 }
 
-resource "google_sql_database" "app_database" {
+resource "google_sql_database" "this" {
   name     = var.db_name
-  instance = google_sql_database_instance.postgres.name
+  instance = google_sql_database_instance.this.name
 }
 
-resource "google_sql_user" "app_user" {
+resource "google_sql_user" "this" {
   name = var.db_user
-  instance = google_sql_database_instance.postgres.name
+  instance = google_sql_database_instance.this.name
   password = var.db_password
 }
