@@ -12,6 +12,8 @@ COPY backend/alembic.ini backend/
 COPY backend/database.py backend/
 COPY backend/alembic/ backend/alembic/
 COPY backend/models/ backend/models/
+COPY backend/core/ backend/core/
+
 
 RUN uv sync --package backend --no-dev --frozen
 
