@@ -1,0 +1,69 @@
+@Library('shared') _
+
+pipeline {
+    agent any
+
+    parameters {
+        string(
+            name:         'ReleaseTag', 
+            defaultValue: 'v0.1.0',
+            description:  'Write tag release to push docker images with it'
+        )
+    }
+
+    environment {
+        OWNER               = 'kellaritonttu'
+        DOCKERHUB_NAMESPACE = 'harhatilatonttu'
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                gitCheckout(params.ReleaseTag)
+            }
+        }
+
+        stage('Login to Docker Hub') {
+            steps {
+                dockerLogin()
+            }
+        }
+
+        stage('Build and Push Images') {
+            parallel {
+                stage('backend') {
+                    steps {
+                        dockerBuildPush(
+                            image:      "${env.DOCKERHUB_NAMESPACE}/simple-chat-backend", 
+                            tag:        params.ReleaseTag, 
+                            dockerfile: "backend/Dockerfile",
+                            context:    "backend"
+                        )
+                    }
+                }
+                stage('frontend') {
+                    steps {
+                        dockerBuildPush(
+                            image:      "${env.DOCKERHUB_NAMESPACE}/simple-chat-frontend", 
+                            tag:        params.ReleaseTag, 
+                            dockerfile: "frontend/Dockerfile",
+                            context:    "frontend"
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            dockerClean(images: [
+                "${env.DOCKERHUB_NAMESPACE}/simple-chat-backend:${params.ReleaseTag}", 
+                "${env.DOCKERHUB_NAMESPACE}/simple-chat-frontend:${params.ReleaseTag}",
+            ])
+            dockerLogout()
+            cleanWs()
+        }
+    }
+}
