@@ -24,21 +24,6 @@ module "firebase" {
   google_oauth_client_secret = var.google_oauth_client_secret
 }
 
-module "migrate" {
-  source = "./modules/cloudrun_job"
-  
-  name   = "db-migrate"
-  region = var.region
-  image  = local.migrate_image
-  
-  service_account_name = module.iam.service_account_email
-  sql_connection_name  = module.cloudsql.connection_name
-  
-  env_vars = {
-    DATABASE_URL = local.database_url
-  }
-}
-
 module "backend" {
   source = "./modules/cloudrun_service"
 
@@ -57,7 +42,6 @@ module "backend" {
     FIREBASE_PROJECT_ID = var.project
   }
 
-  depends_on = [module.migrate]
 }
 
 module "frontend" {
