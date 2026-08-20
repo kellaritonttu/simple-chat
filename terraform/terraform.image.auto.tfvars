@@ -1,4 +1,4 @@
-image_tag = "9887a3a"
+image_tag = "v0.2.0"
 
 dockerhub_username = "harhatilatonttu" 
 
