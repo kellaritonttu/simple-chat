@@ -1,0 +1,52 @@
+@Library('shared') _
+
+pipeline {
+    agent any
+
+    parameters {
+        choice(
+            name:        'ReleaseTag',
+            choices:     ['v0.1.0', 'v0.2.0'],
+            description: 'Choose release tag to deploy'
+        )
+    }
+
+    environment {
+        OWNER = 'kellaritonttu'
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                gitCheckout()
+            }
+        }
+
+        stage('Update Terraform') {
+            steps {
+                script {
+                    def tfVarsFile = 'terraform/terraform.image.auto.tfvars'
+
+                    updateImageTag(
+                        file: tfVarsFile,
+                        key:  'image_tag',
+                        tag:  params.ReleaseTag
+                    )
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                terraformDeploy()
+            }
+        }
+    }
+    
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
