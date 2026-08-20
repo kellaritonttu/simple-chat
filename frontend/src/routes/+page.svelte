@@ -18,7 +18,7 @@
     app_display_name: string;
   }
 
-  // ── Reactive UI state ───────────────────────────────────────────────────
+  // __ Reactive UI state ___________________________________________________
   let messages       = $state<Message[]>([]);
   let input          = $state('');
   let token          = $state<string | null>(null);
@@ -30,13 +30,13 @@
   let currentUser    = $state<{ uid: string } | null>(null);
   let currentAppUser = $state<AppUser | null>(null);
 
-  // ── Firebase User ───────────────────────────────────────────────────────
+  // __ Firebase User _______________________________________________________
   let firebaseUser: User | null = null;
   let es: EventSource | null = null;
   const API = '/api';
 
 
-// ─── Helpers ──────────────────────────────────────────────────────────────
+// ___ Helpers ______________________________________________________________
   async function getHeaders(): Promise<HeadersInit> {
     if (!firebaseUser) {
       throw new Error('Not authenticated');

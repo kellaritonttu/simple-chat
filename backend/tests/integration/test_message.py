@@ -2,7 +2,7 @@ import pytest
 from repository.message import get_message_by_id
 
 
-# ── GET /messages ─────────────────────────────────────────────────────────────
+# __ GET /messages _____________________________________________________________
 
 async def test_list_messages_empty(client, mock_firebase):
     """Test fetching messages when none exist."""
@@ -26,7 +26,7 @@ async def test_list_messages(client, mock_firebase, saved_message):
     assert data[0]["text"] == "Hello world"
 
 
-# ── GET /messages/{id} ────────────────────────────────────────────────────────
+# __ GET /messages/{id} ________________________________________________________
 
 async def test_get_message(client, mock_firebase, saved_message):
     """Test fetching a single message by ID."""
@@ -47,7 +47,7 @@ async def test_get_message_not_found(client, mock_firebase):
     assert response.status_code == 404
 
 
-# ── POST /messages ────────────────────────────────────────────────────────────
+# __ POST /messages ____________________________________________________________
 
 async def test_create_message(client, mock_firebase, saved_user, db_session):
     """Test creating a new message."""
@@ -74,7 +74,7 @@ async def test_create_message_unauthorized(client):
     assert response.status_code == 422
 
 
-# ── PATCH /messages/{id} ──────────────────────────────────────────────────────
+# __ PATCH /messages/{id} ______________________________________________________
 
 async def test_update_message(client, mock_firebase, saved_message, db_session):
     response = await client.patch(
@@ -104,7 +104,7 @@ async def test_update_message_not_found(client, mock_firebase):
     assert response.status_code == 404
 
 
-# ── DELETE /messages/{id} ─────────────────────────────────────────────────────
+# __ DELETE /messages/{id} _____________________________________________________
 
 async def test_delete_message(client, mock_firebase, saved_message, db_session):
     """Test deleting a message."""

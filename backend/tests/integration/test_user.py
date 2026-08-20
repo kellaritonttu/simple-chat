@@ -1,7 +1,7 @@
 import pytest
 from repository.user import get_user_by_id
 
-# ── POST /users/ ─────────────────────────────────────────────────────────────
+# __ POST /users/ _____________________________________________________________
 
 async def test_create_user(client, mock_firebase):
     """Test creating a new user with google_display_name and app_display_name."""
@@ -32,7 +32,7 @@ async def test_create_user_unauthorized(client):
     )
     assert response.status_code == 422
 
-# ── GET /users/me ────────────────────────────────────────────────────────────
+# __ GET /users/me ____________________________________________________________
 
 async def test_get_current_user(client, mock_firebase, saved_user):
     """Test fetching the current user's data."""
@@ -51,7 +51,7 @@ async def test_get_current_user_unauthorized(client):
     response = await client.get("/users/me")
     assert response.status_code == 422
 
-# ── PATCH /users/me ───────────────────────────────────────────────────────────
+# __ PATCH /users/me ___________________________________________________________
 
 async def test_update_user_display_name(client, mock_firebase, saved_user, db_session):
     """Test updating the user's app_display_name."""
@@ -78,7 +78,7 @@ async def test_update_user_unauthorized(client):
     )
     assert response.status_code == 422
 
-# ── DELETE /users/me ─────────────────────────────────────────────────────────
+# __ DELETE /users/me _________________________________________________________
 
 async def test_delete_user(client, mock_firebase, saved_user, db_session):
     """Test deleting the current user."""

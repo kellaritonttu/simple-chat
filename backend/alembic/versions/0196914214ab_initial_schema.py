@@ -38,7 +38,7 @@ def upgrade() -> None:
     op.bulk_insert(users_table, [{
         'id': 'system-legacy-user',
         'google_display_name': 'Legacy User',
-        'app_display_name': 'Unknown User',
+        'app_display_name': 'Anonymous',
     }])
     op.create_table('messages',
     sa.Column('id', sa.Integer(), nullable=False),

@@ -10,7 +10,7 @@ from routers.user import router as user_router
 from core.config import settings
 from core.firebase import init_firebase
 
-# ── Logger ────────────────────────────────────────────────────────────────────
+# __ Logger ____________________________________________________________________
 
 logger = logging.getLogger("chat")
 logger.setLevel(logging.INFO)
@@ -19,7 +19,7 @@ handler.setFormatter(logging.Formatter('%(asctime)s | %(levelname)s | %(message)
 logger.addHandler(handler)
 
 
-# ── Lifespan ──────────────────────────────────────────────────────────────────
+# __ Lifespan __________________________________________________________________
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -30,7 +30,7 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down Chat Backend...")
 
 
-# ── App ───────────────────────────────────────────────────────────────────────
+# __ App _______________________________________________________________________
 
 app = FastAPI(
     title    = "Chat Backend",

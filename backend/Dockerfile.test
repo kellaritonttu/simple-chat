@@ -6,6 +6,6 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
 COPY . .
 
-RUN uv sync --package backend --package chat --group dev
+RUN uv sync --package backend --package simple-chat --group dev
 
 CMD ["uv", "run", "pytest", "backend/tests", "-v"]

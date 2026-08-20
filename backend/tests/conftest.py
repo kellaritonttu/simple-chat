@@ -14,7 +14,7 @@ from repository.message import create_message
 from repository.user import create_user
 from schemas.user import UserCreate
 
-# ── Database ──────────────────────────────────────────────────────────────────
+# __ Database __________________________________________________________________
 
 @pytest.fixture
 async def engine():
@@ -38,7 +38,7 @@ async def db_session(engine):
         await session.rollback()
 
 
-# ── App client ────────────────────────────────────────────────────────────────
+# __ App client ________________________________________________________________
 
 @pytest.fixture
 async def client(db_session):
@@ -56,7 +56,7 @@ async def client(db_session):
     app.dependency_overrides.clear()
 
 
-# ── Firebase mocking ──────────────────────────────────────────────────────────
+# __ Firebase mocking __________________________________________________________
 
 @pytest.fixture
 def mock_firebase():
@@ -78,7 +78,7 @@ def mock_firebase_other():
         yield mock
 
 
-# ── User fixtures ─────────────────────────────────────────────────────────────
+# __ User fixtures _____________________________________________________________
 
 @pytest.fixture
 async def saved_user(db_session):
@@ -92,7 +92,7 @@ async def saved_user(db_session):
     return user
 
 
-# ── Message fixtures ──────────────────────────────────────────────────────────
+# __ Message fixtures __________________________________________________________
 
 @pytest.fixture
 async def saved_message(db_session, saved_user):
