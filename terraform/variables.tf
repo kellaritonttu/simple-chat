@@ -73,7 +73,7 @@ variable "image_tag" {
 variable "frontend_port" {
   type        = number
   description = "Frontend Cloud Run port"
-  default     = 3000
+  default     = 80
 }
 
 variable "backend_port" {
