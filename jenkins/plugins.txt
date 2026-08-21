@@ -1,0 +1,33 @@
+# Configuration & Job management
+configuration-as-code
+job-dsl
+
+# Source control
+git
+git-client
+
+# Pipeline
+workflow-aggregator
+pipeline-model-definition
+workflow-job
+workflow-basic-steps
+workflow-durable-task-step
+workflow-scm-step
+pipeline-groovy-lib
+
+# Docker
+docker-workflow
+docker-commons
+
+# Credentials
+credentials-binding
+plain-credentials
+ssh-credentials
+
+# Utilities
+ws-cleanup
+timestamper
+ansicolor
+
+# UI
+blueocean

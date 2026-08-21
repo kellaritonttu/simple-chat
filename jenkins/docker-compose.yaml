@@ -1,0 +1,27 @@
+services:
+
+  jenkins:
+    image: myjenkins:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.jenkins
+    container_name: jenkins
+    restart: on-failure
+    user: root
+    env_file:
+      - .env
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - CASC_JENKINS_CONFIG=/var/jenkins_casc/jenkins.yaml
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./casc/jenkins.jcasc.yaml:/var/jenkins_casc/jenkins.yaml:ro
+      - ./shared-lib:/var/jenkins_sharedlib:ro
+      - ./jobs:/var/jenkins_jobs:ro
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+
+volumes:
+  jenkins-data:

@@ -1,0 +1,76 @@
+jenkins:
+  numExecutors: 2
+  crumbIssuer:
+    standard: {}
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: admin
+          password: "${JENKINS_ADMIN_PASSWORD}"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - usernamePassword:
+              id: dockerhub-credentials
+              username: "${DOCKERHUB_USERNAME}"
+              password: "${DOCKERHUB_TOKEN}"
+              description: "Docker Hub access token"
+              scope: GLOBAL 
+
+          - usernamePassword:
+              id: github-credentials
+              username: "${GITHUB_USERNAME}"
+              password: "${GITHUB_TOKEN}"
+              description: "GitHub fine-grained PAT"
+              scope: GLOBAL
+
+          - string:
+              id: terraform-cloud-token
+              secret: "${TF_CLOUD_TOKEN}"
+              description: "Terraform Cloud API token"
+              scope: GLOBAL
+
+jobs:
+  - script: >
+      freeStyleJob('seed') {
+        customWorkspace('/var/jenkins_jobs')
+        steps {
+          jobDsl {
+            targets('seed.groovy')
+            removedJobAction('DELETE')
+            removedViewAction('DELETE')
+            sandbox(false)
+          }
+        }
+      }
+
+security:
+  globalJobDslSecurityConfiguration:
+    useScriptSecurity: false
+
+unclassified:
+  location:
+    url: "http://localhost:8080/"
+  scmGit:
+    globalConfigEmail: "jenkins@local"
+    globalConfigName: "Jenkins"
+    createAccountBasedOnEmail: false
+    showEntireCommitSummaryInChanges: false
+
+  globalLibraries:
+    libraries:
+      - name: "shared"
+        defaultVersion: "dev"
+        implicit: false
+        retriever:
+          modernSCM:
+            scm:
+              git:
+                remote: "https://github.com/kellaritonttu/jenkins-setup"
+            libraryPath: "shared-lib/"
