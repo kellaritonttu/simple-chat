@@ -57,6 +57,7 @@ module "frontend" {
 
   env_vars = {
     BACKEND_URL            = module.backend.url
+    BACKEND_HOST           = trimprefix(module.backend.url, "https://")
     PUBLIC_FIREBASE_CONFIG = jsonencode({
       apiKey            = module.firebase.api_key
       authDomain        = module.firebase.auth_domain
